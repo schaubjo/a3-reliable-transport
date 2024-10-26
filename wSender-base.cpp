@@ -2,6 +2,7 @@
 #include "PacketHeader.h"
 #include "crc32.h"
 #include "socket.h"
+#include <cstdint>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
@@ -46,6 +47,7 @@ int main(int argc, char *argv[]) {
   if (make_client_sockaddr(&addr, hostname, receiver_port) == -1) {
     cerr << "Error making client sockaddr" << endl;
   }
+
   // Send START message to initiate connection
   // START: type = 0; seqNum = random(); length = 0; checksum = ?
 
