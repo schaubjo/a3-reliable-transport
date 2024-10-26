@@ -53,6 +53,8 @@ int main(int argc, char *argv[]) {
 
   // Wait for ACK of START
 
+  // Do main logic of sending file data
+
   // Send END message to end connection
   // END: type = 1; seqNum = same as START; length = 0; checksum = ?
 
