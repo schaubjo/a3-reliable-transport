@@ -1,9 +1,11 @@
 
-#include <cstdio>
-#include <string>
-#include <fstream>
 #include "PacketHeader.h"
 #include "crc32.h"
+#include "socket.h"
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+#include <string>
 
 #define MAX_PACKET_SIZE 1472
 #define START 0
@@ -15,9 +17,9 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
   if (argc != 6) {
-    printf(
-        "Usage: %s <receiver_ip> <receiver_port> <window_size> <input_filename> <log_filename>\n",
-        argv[0]);
+    printf("Usage: %s <receiver_ip> <receiver_port> <window_size> "
+           "<input_filename> <log_filename>\n",
+           argv[0]);
     return 1;
   }
 
@@ -37,5 +39,20 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  
+  // Create UDP socket
+  int udp_sock = make_udp_socket();
+  struct sockaddr_in addr;
+  const char *hostname = receiver_ip.c_str();
+  if (make_client_sockaddr(&addr, hostname, receiver_port) == -1) {
+    cerr << "Error making client sockaddr" << endl;
+  }
+  // Send START message to initiate connection
+  // START: type = 0; seqNum = random(); length = 0; checksum = ?
+
+  // Wait for ACK of START
+
+  // Send END message to end connection
+  // END: type = 1; seqNum = same as START; length = 0; checksum = ?
+
+  // Wait for ACK of END
 }
