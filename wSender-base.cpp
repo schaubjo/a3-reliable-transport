@@ -1,4 +1,3 @@
-
 #include <arpa/inet.h>
 #include <cstring>
 #include <iostream>
@@ -10,6 +9,8 @@ int main() {
   int sockfd;
   struct sockaddr_in server_addr;
   const char *message = "Hello, UDP Receiver!";
+  char ack_buffer[1024];
+  socklen_t addr_len = sizeof(server_addr);
 
   // Create a UDP socket
   if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -35,6 +36,19 @@ int main() {
   }
 
   std::cout << "Message sent: " << message << std::endl;
+
+  // Wait for ACK from the receiver
+  ssize_t ack_received = recvfrom(sockfd, ack_buffer, sizeof(ack_buffer) - 1, 0,
+                                  (struct sockaddr *)&server_addr, &addr_len);
+
+  if (ack_received < 0) {
+    perror("ACK receive failed");
+    close(sockfd);
+    return 1;
+  }
+
+  ack_buffer[ack_received] = '\0'; // Null-terminate the ACK string
+  std::cout << "ACK received: " << ack_buffer << std::endl;
 
   // Close the socket
   close(sockfd);

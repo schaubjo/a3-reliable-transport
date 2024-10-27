@@ -1,4 +1,3 @@
-
 #include <arpa/inet.h>
 #include <cstring>
 #include <iostream>
@@ -47,6 +46,19 @@ int main() {
 
   buffer[received_bytes] = '\0'; // Null-terminate the received string
   std::cout << "Message received: " << buffer << std::endl;
+
+  // Send ACK message back to the sender
+  const char *ack_message = "ACK: Message received";
+  ssize_t sent_bytes = sendto(sockfd, ack_message, strlen(ack_message), 0,
+                              (const struct sockaddr *)&client_addr, addr_len);
+
+  if (sent_bytes < 0) {
+    perror("ACK send failed");
+    close(sockfd);
+    return 1;
+  }
+
+  std::cout << "ACK sent: " << ack_message << std::endl;
 
   // Close the socket
   close(sockfd);

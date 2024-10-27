@@ -64,6 +64,7 @@ int send_packet(int sockfd, PacketHeader &header, const char *data,
   //   }
   // }
   // TEST
+
   if (sendto(sockfd, data, header.length, 0, (const struct sockaddr *)&dest,
              sizeof(dest)) < 0) {
     perror("Failed to send data.");
