@@ -5,3 +5,4 @@ wReceiver-opt
 *.dSYM
 __pycache__/
 log*
+.vscode
