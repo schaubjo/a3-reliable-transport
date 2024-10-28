@@ -97,3 +97,22 @@ int receive_packet(int sockfd, PacketHeader &header, sockaddr_in &src) {
 
   return 0;
 }
+
+int send_packet_header(PacketHeader &packet_header, int sockfd,
+                       sockaddr_in &addr) {
+  if (sendto(sockfd, &packet_header, sizeof(packet_header), 0,
+             (const struct sockaddr *)&addr, sizeof(addr)) < 0) {
+    cerr << "Failed to send packet header" << endl;
+    return -1;
+  }
+  return 0;
+}
+
+bool receive_packet_header(PacketHeader &packet_header, int sockfd,
+                           sockaddr_in &addr) {
+  socklen_t addrLen = sizeof(addr);
+  ssize_t bytes_received =
+      recvfrom(sockfd, &packet_header, sizeof(PacketHeader), MSG_DONTWAIT,
+               (struct sockaddr *)&addr, &addrLen);
+  return bytes_received == sizeof(packet_header);
+}

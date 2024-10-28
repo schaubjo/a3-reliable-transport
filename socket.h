@@ -15,4 +15,10 @@ int send_packet(int sockfd, PacketHeader &packet, const char *data,
                 const sockaddr_in &dest);
 
 int receive_packet(int sockfd, PacketHeader &header, sockaddr_in &src);
+
+int send_packet_header(PacketHeader &packet_header, int sockfd,
+                       sockaddr_in &addr);
+
+bool receive_packet_header(PacketHeader &packet_header, int sockfd,
+                           sockaddr_in &addr);
 #endif

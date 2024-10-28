@@ -1,9 +1,18 @@
+#include "PacketHeader.h"
+#include "socket.h"
 #include <arpa/inet.h>
+#include <chrono>
 #include <cstring>
 #include <iostream>
+#include <thread>
 #include <unistd.h>
 
-// const int PORT = 12345;
+#define MAX_PACKET_SIZE 1472
+#define START 0
+#define END 1
+#define DATA 2
+#define ACK 3
+const int RETRANSMISSION_TIMER = 500; // ms
 
 int main(int argc, char *argv[]) {
   if (argc != 6) {
@@ -37,31 +46,80 @@ int main(int argc, char *argv[]) {
   server_addr.sin_addr.s_addr =
       inet_addr(receiver_ip); // Localhost 127.0.0.1 for testing
 
-  // Send message to the receiver
-  ssize_t sent_bytes =
-      sendto(sockfd, message, strlen(message), 0,
-             (const struct sockaddr *)&server_addr, sizeof(server_addr));
+  // Send START packet to initiate connection
+  while (true) {
+    PacketHeader start_packet;
+    start_packet.type = htonl(START);
+    start_packet.length = htonl(0);
+    start_packet.seqNum = htonl(4);    // TODO: change to rand()
+    start_packet.checksum = htonl(31); // TODO: add crc
+    std::cout << "Sending START" << std::endl;
+    if (send_packet_header(start_packet, sockfd, server_addr) < 0) {
+      return 1;
+    }
 
-  if (sent_bytes < 0) {
-    perror("Send failed");
-    close(sockfd);
-    return 1;
+    // Resend START if not acknowledged within 500 ms
+    auto start_time = std::chrono::steady_clock::now();
+    bool acked = false;
+    while (true) {
+      // Check for ACK
+      PacketHeader ack_header;
+      if (receive_packet_header(ack_header, sockfd, server_addr) &&
+          ntohl(ack_header.type) == ACK &&
+          ntohl(ack_header.seqNum) == htonl(start_packet.seqNum)) {
+        std::cout << "ACK received for START" << std::endl;
+        acked = true;
+        break;
+      }
+
+      // Check if need to retransmit
+      auto current_time = std::chrono::steady_clock::now();
+      auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            current_time - start_time)
+                            .count();
+      if (elapsed_ms >= RETRANSMISSION_TIMER) {
+        std::cout << "Retransmitting packet..." << std::endl;
+        break; // Exit the inner loop to retransmit the packet
+      }
+    }
+
+    if (acked) {
+      break;
+      std::cout << "Breaking out of START loop" << std::endl;
+    }
   }
 
-  std::cout << "Message sent: " << message << std::endl;
+  // if (ntohl(ack_header.type) == ACK &&
+  //     ntohl(ack_header.seqNum) == htonl(start_packet.seqNum)) {
+  //   std::cout << "ACK for START received" << std::endl;
+  // }
+  // // Send message to the receiver
+  // ssize_t sent_bytes =
+  //     sendto(sockfd, message, strlen(message), 0,
+  //            (const struct sockaddr *)&server_addr, sizeof(server_addr));
 
-  // Wait for ACK from the receiver
-  ssize_t ack_received = recvfrom(sockfd, ack_buffer, sizeof(ack_buffer) - 1, 0,
-                                  (struct sockaddr *)&server_addr, &addr_len);
+  // if (sent_bytes < 0) {
+  //   perror("Send failed");
+  //   close(sockfd);
+  //   return 1;
+  // }
 
-  if (ack_received < 0) {
-    perror("ACK receive failed");
-    close(sockfd);
-    return 1;
-  }
+  // std::cout << "Message sent: " << message << std::endl;
 
-  ack_buffer[ack_received] = '\0'; // Null-terminate the ACK string
-  std::cout << "ACK received: " << ack_buffer << std::endl;
+  // // Wait for ACK from the receiver
+  // ssize_t ack_received = recvfrom(sockfd, ack_buffer, sizeof(ack_buffer) - 1,
+  // 0,
+  //                                 (struct sockaddr *)&server_addr,
+  //                                 &addr_len);
+
+  // if (ack_received < 0) {
+  //   perror("ACK receive failed");
+  //   close(sockfd);
+  //   return 1;
+  // }
+
+  // ack_buffer[ack_received] = '\0'; // Null-terminate the ACK string
+  // std::cout << "ACK received: " << ack_buffer << std::endl;
 
   // Close the socket
   close(sockfd);

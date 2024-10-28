@@ -1,10 +1,19 @@
+#include "PacketHeader.h"
+#include "socket.h"
 #include <arpa/inet.h>
+#include <chrono>
 #include <cstring>
 #include <iostream>
+#include <thread>
 #include <unistd.h>
 
-// const int PORT = 12345;
 const int BUFFER_SIZE = 1024;
+
+#define MAX_PACKET_SIZE 1472
+#define START 0
+#define END 1
+#define DATA 2
+#define ACK 3
 
 int main(int argc, char *argv[]) {
   if (argc != 5) {
@@ -35,33 +44,76 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  std::cout << "Waiting for messages..." << std::endl;
+  std::cout << "Listening..." << std::endl;
 
-  // Receive messages
-  ssize_t received_bytes = recvfrom(sockfd, buffer, BUFFER_SIZE, 0,
-                                    (struct sockaddr *)&client_addr, &addr_len);
+  while (true) {
+    // Wait until START message is received to initiate connection
+    bool connection_received = false;
+    while (!connection_received) {
+      PacketHeader start_header;
+      if (receive_packet_header(start_header, sockfd, server_addr) &&
+          ntohl(start_header.type == START)) {
+        std::cout << "Received START message" << std::endl;
+        connection_received = true;
+        // Send ACK
+        PacketHeader ack_header;
+        ack_header.type = htonl(ACK);
+        ack_header.length = htonl(0);
+        ack_header.seqNum = start_header.seqNum;
+        ack_header.checksum = htonl(0);
+        std::cout << "Sending ACK for START" << std::endl;
+        if (send_packet_header(ack_header, sockfd, server_addr) < 0) {
+          return 1;
+        }
+      }
 
-  if (received_bytes < 0) {
-    perror("Receive failed");
-    close(sockfd);
-    return 1;
+      // Busy waiting
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    // Receive packets until END message arrives
+    std::cout << "Waiting for data..." << std::endl;
+    bool end = false;
+    while (!end) {
+      PacketHeader packet_header;
+      if (receive_packet_header(packet_header, sockfd, server_addr)) {
+        if (ntohl(packet_header.type == END)) {
+          // TODO: check seqnum to be same as start
+        }
+        if (ntohl(packet_header.type == DATA)) {
+        }
+      }
+      // Busy waiting
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
   }
+  // // Receive messages
+  // ssize_t received_bytes = recvfrom(sockfd, buffer, BUFFER_SIZE, 0,
+  //                                   (struct sockaddr *)&client_addr,
+  //                                   &addr_len);
 
-  buffer[received_bytes] = '\0'; // Null-terminate the received string
-  std::cout << "Message received: " << buffer << std::endl;
+  // if (received_bytes < 0) {
+  //   perror("Receive failed");
+  //   close(sockfd);
+  //   return 1;
+  // }
 
-  // Send ACK message back to the sender
-  const char *ack_message = "ACK: Message received";
-  ssize_t sent_bytes = sendto(sockfd, ack_message, strlen(ack_message), 0,
-                              (const struct sockaddr *)&client_addr, addr_len);
+  // buffer[received_bytes] = '\0'; // Null-terminate the received string
+  // std::cout << "Message received: " << buffer << std::endl;
 
-  if (sent_bytes < 0) {
-    perror("ACK send failed");
-    close(sockfd);
-    return 1;
-  }
+  // // Send ACK message back to the sender
+  // const char *ack_message = "ACK: Message received";
+  // ssize_t sent_bytes = sendto(sockfd, ack_message, strlen(ack_message), 0,
+  //                             (const struct sockaddr *)&client_addr,
+  //                             addr_len);
 
-  std::cout << "ACK sent: " << ack_message << std::endl;
+  // if (sent_bytes < 0) {
+  //   perror("ACK send failed");
+  //   close(sockfd);
+  //   return 1;
+  // }
+
+  // std::cout << "ACK sent: " << ack_message << std::endl;
 
   // Close the socket
   close(sockfd);
