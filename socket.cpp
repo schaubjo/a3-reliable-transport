@@ -44,60 +44,6 @@ int make_server_sockaddr(struct sockaddr_in *addr, int port) {
   return 0;
 }
 
-int send_packet(int sockfd, PacketHeader &header, const char *data,
-                const sockaddr_in &dest) {
-  // // Send header
-  // cout << "About to send header" << endl;
-  // if (sendto(sockfd, &header, sizeof(PacketHeader), 0,
-  //            (const struct sockaddr *)&dest, sizeof(dest)) < 0) {
-  //   perror("Failed to send header.");
-  //   return -1;
-  // }
-  // cout << "Finished sending header" << endl;
-
-  // if (header.length > 0) {
-  //   if (sendto(sockfd, data, header.length, 0, (const struct sockaddr
-  //   *)&dest,
-  //              sizeof(dest)) < 0) {
-  //     perror("Failed to send data.");
-  //     return -1;
-  //   }
-  // }
-  // TEST
-
-  if (sendto(sockfd, data, header.length, 0, (const struct sockaddr *)&dest,
-             sizeof(dest)) < 0) {
-    perror("Failed to send data.");
-    return -1;
-  }
-  return 0;
-}
-
-int receive_packet(int sockfd, PacketHeader &header, sockaddr_in &src) {
-  socklen_t addrLen = sizeof(src);
-
-  // Receive header
-  cout << "About to receive header" << endl;
-  if (recvfrom(sockfd, &header, sizeof(PacketHeader), 0,
-               (struct sockaddr *)&src, &addrLen) < 0) {
-    perror("Failed to receive header");
-    return -1;
-  }
-  cout << "Received header" << endl;
-
-  const int DATA_SIZE = ntohl(header.length);
-  if (DATA_SIZE > 0) {
-    char buffer[DATA_SIZE];
-    if (recvfrom(sockfd, buffer, header.length, 0, (struct sockaddr *)&src,
-                 &addrLen) < 0) {
-      perror("Failed to receive data");
-      return -1;
-    }
-  }
-
-  return 0;
-}
-
 int send_packet_header(PacketHeader &packet_header, int sockfd,
                        sockaddr_in &addr) {
   if (sendto(sockfd, &packet_header, sizeof(packet_header), 0,

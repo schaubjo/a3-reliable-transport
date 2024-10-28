@@ -27,7 +27,6 @@ int main(int argc, char *argv[]) {
 
   int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   struct sockaddr_in server_addr, client_addr;
-  socklen_t addr_len = sizeof(client_addr);
   char buffer[BUFFER_SIZE];
 
   // Define server address
