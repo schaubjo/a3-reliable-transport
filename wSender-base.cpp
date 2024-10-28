@@ -39,8 +39,8 @@ int main(int argc, char *argv[]) {
 
   // Define server address
   memset(&server_addr, 0, sizeof(server_addr));
-  server_addr.sin_family = AF_INET;            // IPv4
-  server_addr.sin_port = htons(receiver_port); // Port
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_port = htons(receiver_port);
   server_addr.sin_addr.s_addr =
       inet_addr(receiver_ip); // Localhost 127.0.0.1 for testing
 
