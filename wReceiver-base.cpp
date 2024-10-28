@@ -3,7 +3,7 @@
 #include <iostream>
 #include <unistd.h>
 
-const int PORT = 12345;
+// const int PORT = 12345;
 const int BUFFER_SIZE = 1024;
 
 int main(int argc, char *argv[]) {
@@ -16,21 +16,15 @@ int main(int argc, char *argv[]) {
   std::string output_dir = argv[3];
   std::string log = argv[4];
 
-  int sockfd;
+  int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   struct sockaddr_in server_addr, client_addr;
   socklen_t addr_len = sizeof(client_addr);
   char buffer[BUFFER_SIZE];
 
-  // Create a UDP socket
-  if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-    perror("Socket creation failed");
-    return 1;
-  }
-
   // Define server address
   memset(&server_addr, 0, sizeof(server_addr));
   server_addr.sin_family = AF_INET;         // IPv4
-  server_addr.sin_port = htons(PORT);       // Port
+  server_addr.sin_port = htons(port_num);   // Port
   server_addr.sin_addr.s_addr = INADDR_ANY; // Listen on all interfaces
 
   // Bind the socket

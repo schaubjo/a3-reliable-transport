@@ -3,7 +3,7 @@
 #include <iostream>
 #include <unistd.h>
 
-const int PORT = 12345;
+// const int PORT = 12345;
 
 int main(int argc, char *argv[]) {
   if (argc != 6) {
@@ -13,29 +13,29 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  std::string receiver_ip = argv[1];
+  const char *receiver_ip = argv[1];
   int receiver_port = std::stoi(argv[2]);
   int window_size = std::stoi(argv[3]);
   std::string input_filename = argv[4];
   std::string log_filename = argv[5];
 
-  int sockfd;
-  struct sockaddr_in server_addr;
-  const char *message = "Hello, UDP Receiver!";
-  char ack_buffer[1024];
-  socklen_t addr_len = sizeof(server_addr);
-
-  // Create a UDP socket
-  if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-    perror("Socket creation failed");
+  int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+  if (sockfd < 0) {
+    std::cerr << "Failed to make UDP socket." << std::endl;
     return 1;
   }
 
+  struct sockaddr_in server_addr;
+  const char *message = "Hello, new UDP Receiver!";
+  char ack_buffer[1024];
+  socklen_t addr_len = sizeof(server_addr);
+
   // Define server address
   memset(&server_addr, 0, sizeof(server_addr));
-  server_addr.sin_family = AF_INET;                     // IPv4
-  server_addr.sin_port = htons(PORT);                   // Port
-  server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Localhost
+  server_addr.sin_family = AF_INET;            // IPv4
+  server_addr.sin_port = htons(receiver_port); // Port
+  server_addr.sin_addr.s_addr =
+      inet_addr(receiver_ip); // Localhost 127.0.0.1 for testing
 
   // Send message to the receiver
   ssize_t sent_bytes =
