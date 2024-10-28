@@ -5,7 +5,20 @@
 
 const int PORT = 12345;
 
-int main() {
+int main(int argc, char *argv[]) {
+  if (argc != 6) {
+    printf("Usage: %s <receiver_ip> <receiver_port> <window_size> "
+           "<input_filename> <log_filename>\n",
+           argv[0]);
+    return 1;
+  }
+
+  std::string receiver_ip = argv[1];
+  int receiver_port = std::stoi(argv[2]);
+  int window_size = std::stoi(argv[3]);
+  std::string input_filename = argv[4];
+  std::string log_filename = argv[5];
+
   int sockfd;
   struct sockaddr_in server_addr;
   const char *message = "Hello, UDP Receiver!";
@@ -55,21 +68,6 @@ int main() {
   return 0;
 }
 
-// #include "PacketHeader.h"
-// #include "crc32.h"
-// #include "socket.h"
-// #include <arpa/inet.h>
-// #include <chrono>
-// #include <cstdint>
-// #include <cstdio>
-// #include <cstring>
-// #include <fstream>
-// #include <iostream>
-// #include <string>
-// #include <sys/socket.h>
-// #include <thread>
-// #include <unistd.h>
-
 // #define MAX_PACKET_SIZE 1472
 // #define START 0
 // #define END 1
@@ -79,18 +77,18 @@ int main() {
 // using namespace std;
 
 // int main(int argc, char *argv[]) {
-//   if (argc != 6) {
-//     printf("Usage: %s <receiver_ip> <receiver_port> <window_size> "
-//            "<input_filename> <log_filename>\n",
-//            argv[0]);
-//     return 1;
-//   }
+// if (argc != 6) {
+//   printf("Usage: %s <receiver_ip> <receiver_port> <window_size> "
+//          "<input_filename> <log_filename>\n",
+//          argv[0]);
+//   return 1;
+// }
 
-//   string receiver_ip = argv[1];
-//   int receiver_port = stoi(argv[2]);
-//   int window_size = stoi(argv[3]);
-//   string input_filename = argv[4];
-//   string log_filename = argv[5];
+// string receiver_ip = argv[1];
+// int receiver_port = stoi(argv[2]);
+// int window_size = stoi(argv[3]);
+// string input_filename = argv[4];
+// string log_filename = argv[5];
 
 //   // // ofstream log_file(log_filename, ofstream::app);
 //   // // log_file.close();

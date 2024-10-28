@@ -6,7 +6,16 @@
 const int PORT = 12345;
 const int BUFFER_SIZE = 1024;
 
-int main() {
+int main(int argc, char *argv[]) {
+  if (argc != 5) {
+    printf("Usage: %s <port-num> <window-size> <output-dir> <log>\n", argv[0]);
+    return 1;
+  }
+  int port_num = std::stoi(argv[1]);
+  int window_size = std::stoi(argv[2]);
+  std::string output_dir = argv[3];
+  std::string log = argv[4];
+
   int sockfd;
   struct sockaddr_in server_addr, client_addr;
   socklen_t addr_len = sizeof(client_addr);
@@ -64,27 +73,6 @@ int main() {
   close(sockfd);
   return 0;
 }
-
-// #include "PacketHeader.h"
-// #include "crc32.h"
-// #include "socket.h"
-// #include <arpa/inet.h>
-// #include <chrono>
-// #include <cstdint>
-// #include <cstdio>
-// #include <cstring>
-// #include <fstream>
-// #include <iostream>
-// #include <string>
-// #include <sys/socket.h>
-// #include <thread>
-// #include <unistd.h>
-
-// #define MAX_PACKET_SIZE 1472
-// #define START 0
-// #define END 1
-// #define DATA 2
-// #define ACK 3
 
 // using namespace std;
 
