@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cstring>
 #include <iostream>
+#include <string>
 #include <thread>
 #include <unistd.h>
 
@@ -12,10 +13,10 @@ int main(int argc, char *argv[]) {
     printf("Usage: %s <port-num> <window-size> <output-dir> <log>\n", argv[0]);
     return 1;
   }
-  int port_num = std::stoi(argv[1]);
-  int window_size = std::stoi(argv[2]);
-  std::string output_dir = argv[3];
-  std::string log = argv[4];
+  const int port_num = std::stoi(argv[1]);
+  const int window_size = std::stoi(argv[2]);
+  const std::string output_dir = argv[3];
+  const std::string log = argv[4];
 
   int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   struct sockaddr_in server_addr, client_addr;

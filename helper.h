@@ -20,11 +20,13 @@ struct Packet {
   char data[1456]; // max payload
 };
 
+void start_connection(int sockfd, sockaddr_in &server_addr);
+
 void send_packet_header(PacketHeader &packet_header, int sockfd,
                         sockaddr_in &addr);
 
 bool receive_packet_header(PacketHeader &packet_header, int sockfd,
                            sockaddr_in &addr);
 
-std::vector<Packet> packet_data_init(std::string &filename);
+std::vector<Packet> packet_data_init(const std::string &filename);
 #endif
