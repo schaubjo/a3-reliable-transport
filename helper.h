@@ -24,8 +24,12 @@ void start_connection(int sockfd, sockaddr_in &server_addr);
 
 void end_connection(int sockfd, sockaddr_in &server_addr);
 
+void send_packet(Packet &packet, int sockfd, sockaddr_in &addr);
+
 void send_packet_header(PacketHeader &packet_header, int sockfd,
                         sockaddr_in &addr);
+void send_packet_data(sockaddr_in &addr, int sockfd, const char *data,
+                      int data_length);
 
 bool receive_packet_header(PacketHeader &packet_header, int sockfd,
                            sockaddr_in &addr);

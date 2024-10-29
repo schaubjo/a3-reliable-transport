@@ -70,6 +70,9 @@ int main(int argc, char *argv[]) {
           // TODO: check seqnum to be same as start
         }
         if (ntohl(packet_header.type == DATA)) {
+          std::cout << "DATA packet received." << std::endl;
+          std::cout << "Seqnum = " << packet_header.seqNum << std::endl;
+          std::cout << "Length = " << packet_header.length << std::endl;
         }
       }
       // Busy waiting

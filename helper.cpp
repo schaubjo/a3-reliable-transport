@@ -61,11 +61,31 @@ void end_connection(int sockfd, sockaddr_in &server_addr) {
   close(sockfd);
 }
 
+void send_packet(Packet &packet, int sockfd, sockaddr_in &addr) {
+  // Send packet header
+  send_packet_header(packet.header, sockfd, addr);
+
+  // Send packet data
+  if (packet.header.length > 0) {
+    send_packet_data(addr, sockfd, packet.data, packet.header.length);
+  }
+}
+
 void send_packet_header(PacketHeader &packet_header, int sockfd,
                         sockaddr_in &addr) {
   if (sendto(sockfd, &packet_header, sizeof(packet_header), 0,
              (const struct sockaddr *)&addr, sizeof(addr)) < 0) {
     cerr << "Failed to send packet header" << endl;
+  }
+}
+
+void send_packet_data(sockaddr_in &addr, int sockfd, const char *data,
+                      int data_length) {
+  ssize_t bytes_sent = sendto(sockfd, data, data_length, 0,
+                              (const struct sockaddr *)&addr, sizeof(addr));
+
+  if (bytes_sent != data_length) {
+    cerr << "Failed to send all the data in packet" << endl;
   }
 }
 

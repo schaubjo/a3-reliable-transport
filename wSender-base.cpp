@@ -58,6 +58,7 @@ int main(int argc, char *argv[]) {
   start_connection(sockfd, server_addr);
 
   // Send data packets until all have been received
+  send_packet(packets[packets.size() - 1], sockfd, server_addr);
 
   // End connection
   end_connection(sockfd, server_addr);
