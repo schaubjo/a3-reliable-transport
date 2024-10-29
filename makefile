@@ -2,10 +2,10 @@
 CC=g++ -I ./ -g -Wall -std=c++17 -Wno-deprecated-declarations 
 
 # wSender-base source files
-WSENDERBASE_SRC = wSender-base.cpp socket.cpp
+WSENDERBASE_SRC = wSender-base.cpp helper.cpp
 WSENDERBASE_TARGET = wSender-base
 
-WRECEIVERBASE_SRC = wReceiver-base.cpp socket.cpp
+WRECEIVERBASE_SRC = wReceiver-base.cpp helper.cpp
 WRECEIVERBASE_TARGET = wReceiver-base
 
 all: ${WSENDERBASE_TARGET} ${WRECEIVERBASE_TARGET}
