@@ -12,24 +12,24 @@
 #include <vector>
 using namespace std;
 
-void start_connection(int sockfd, sockaddr_in &server_addr) {
+void start_connection(sockaddr_in &server_addr, int sockfd, int startSeqNum) {
   // Initialize start packet header contents
   PacketHeader start_packet_header;
   start_packet_header.type = htonl(START);
   start_packet_header.length = htonl(0);
-  start_packet_header.seqNum = htonl(4);    // TODO: change to rand()
+  start_packet_header.seqNum = htonl(startSeqNum);
   start_packet_header.checksum = htonl(31); // TODO: add crc
 
   Packet start_packet;
   start_packet.header = start_packet_header;
-  // Send START message
-  bool acked = false;
 
+  bool acked = false;
   while (!acked) {
+    // Send START message until acknowledged
     std::cout << "Sending START" << std::endl;
     send_packet(start_packet, server_addr, sockfd);
 
-    // Resend START if not acknowledged within 500 ms
+    // Resend if not acknowledged within 500 ms
     auto start_time = std::chrono::steady_clock::now();
     while (true) {
       // Check for ACK
@@ -49,16 +49,54 @@ void start_connection(int sockfd, sockaddr_in &server_addr) {
                             .count();
       if (elapsed_ms >= RETRANSMISSION_TIMER) {
         std::cout << "Retransmitting packet..." << std::endl;
-        break; // Exit the inner loop to retransmit the packet
+        break;
       }
     }
   }
 }
 
-void end_connection(int sockfd, sockaddr_in &server_addr) {
+void end_connection(sockaddr_in &server_addr, int sockfd, int startSeqNum) {
   std::cout << "Ending connection..." << std::endl;
-  // TODO: Send END packet and wait for ACK
+  // Initialize start packet header contents
+  PacketHeader end_packet_header;
+  end_packet_header.type = htonl(START);
+  end_packet_header.length = htonl(0);
+  end_packet_header.seqNum = htonl(startSeqNum);
+  end_packet_header.checksum = htonl(31); // TODO: add crc
 
+  Packet end_packet;
+  end_packet.header = end_packet_header;
+
+  bool acked = false;
+  while (!acked) {
+    // Send START message until acknowledged
+    std::cout << "Sending END" << std::endl;
+    send_packet(end_packet, server_addr, sockfd);
+
+    // Resend if not acknowledged within 500 ms
+    auto start_time = std::chrono::steady_clock::now();
+    while (true) {
+      // Check for ACK
+      Packet ack_packet;
+      if (receive_packet(ack_packet, server_addr, sockfd) &&
+          ack_packet.header.type == ACK &&
+          ack_packet.header.seqNum == htonl(end_packet.header.seqNum)) {
+        std::cout << "ACK received for END" << std::endl;
+        acked = true;
+        break;
+      }
+
+      // Check if need to retransmit
+      auto current_time = std::chrono::steady_clock::now();
+      auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            current_time - start_time)
+                            .count();
+      if (elapsed_ms >= RETRANSMISSION_TIMER) {
+        std::cout << "Retransmitting packet..." << std::endl;
+        break;
+      }
+    }
+  }
   // Close the socket
   close(sockfd);
 }

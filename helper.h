@@ -20,9 +20,9 @@ struct Packet {
   char data[1456]; // max payload
 };
 
-void start_connection(int sockfd, sockaddr_in &server_addr);
+void start_connection(sockaddr_in &server_addr, int sockfd, int startSeqNum);
 
-void end_connection(int sockfd, sockaddr_in &server_addr);
+void end_connection(sockaddr_in &server_addr, int sockfd, int startSeqNum);
 
 void send_packet(Packet &packet, sockaddr_in &addr, int sockfd);
 

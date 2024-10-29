@@ -27,16 +27,6 @@ int main(int argc, char *argv[]) {
   // Transform input file into vector of packets
   std::vector<Packet> packets = packet_data_init(input_filename);
 
-  // Testing info
-  std::cout << "Number of packets: " << packets.size() << std::endl;
-  std::cout << "Packet 1 length: " << packets[0].header.length << std::endl;
-  std::cout << "Packet 1 data: " << packets[0].data << std::endl;
-
-  std::cout << "Last packet length: "
-            << packets[packets.size() - 1].header.length << std::endl;
-  std::cout << "Last packet data: " << packets[packets.size() - 1].data
-            << std::endl;
-
   // Socket setup
   int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sockfd < 0) {
@@ -53,13 +43,16 @@ int main(int argc, char *argv[]) {
   server_addr.sin_addr.s_addr =
       inet_addr(receiver_ip); // Localhost 127.0.0.1 for testing
 
+  // Generate random initial seq num for START
+  int startSeqNum = 42; // TODO change to rand()
+
   // Initiate connection
-  start_connection(sockfd, server_addr);
+  start_connection(server_addr, sockfd, startSeqNum);
 
   // Send data packets until all have been received
   send_packet(packets[packets.size() - 1], server_addr, sockfd);
 
   // End connection
-  end_connection(sockfd, server_addr);
+  end_connection(server_addr, sockfd, startSeqNum);
   return 0;
 }
