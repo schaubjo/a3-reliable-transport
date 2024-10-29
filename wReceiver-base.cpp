@@ -58,9 +58,7 @@ int main(int argc, char *argv[]) {
         ack_header.seqNum = start_header.seqNum;
         ack_header.checksum = htonl(0);
         std::cout << "Sending ACK for START" << std::endl;
-        if (send_packet_header(ack_header, sockfd, server_addr) < 0) {
-          return 1;
-        }
+        send_packet_header(ack_header, sockfd, server_addr);
       }
 
       // Busy waiting

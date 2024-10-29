@@ -11,8 +11,8 @@ int make_client_sockaddr(struct sockaddr_in *addr, const char *hostname,
 
 int make_server_sockaddr(struct sockaddr_in *addr, int port);
 
-int send_packet_header(PacketHeader &packet_header, int sockfd,
-                       sockaddr_in &addr);
+void send_packet_header(PacketHeader &packet_header, int sockfd,
+                        sockaddr_in &addr);
 
 bool receive_packet_header(PacketHeader &packet_header, int sockfd,
                            sockaddr_in &addr);

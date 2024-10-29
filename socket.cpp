@@ -44,14 +44,12 @@ int make_server_sockaddr(struct sockaddr_in *addr, int port) {
   return 0;
 }
 
-int send_packet_header(PacketHeader &packet_header, int sockfd,
-                       sockaddr_in &addr) {
+void send_packet_header(PacketHeader &packet_header, int sockfd,
+                        sockaddr_in &addr) {
   if (sendto(sockfd, &packet_header, sizeof(packet_header), 0,
              (const struct sockaddr *)&addr, sizeof(addr)) < 0) {
     cerr << "Failed to send packet header" << endl;
-    return -1;
   }
-  return 0;
 }
 
 bool receive_packet_header(PacketHeader &packet_header, int sockfd,
