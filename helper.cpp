@@ -1,5 +1,6 @@
 #include "helper.h"
 #include "PacketHeader.h"
+#include "crc32.h"
 #include <arpa/inet.h>
 #include <cstring>
 #include <fstream>
@@ -20,7 +21,7 @@ void start_connection(sockaddr_in &server_addr, int sockfd, int start_seq_num) {
   start_packet_header.type = htonl(START);
   start_packet_header.length = htonl(0);
   start_packet_header.seqNum = htonl(start_seq_num);
-  start_packet_header.checksum = htonl(31); // TODO: add crc
+  start_packet_header.checksum = htonl(0);
 
   Packet start_packet;
   start_packet.header = start_packet_header;
@@ -64,7 +65,7 @@ void end_connection(sockaddr_in &server_addr, int sockfd, int start_seq_num) {
   end_packet_header.type = htonl(END);
   end_packet_header.length = htonl(0);
   end_packet_header.seqNum = htonl(start_seq_num);
-  end_packet_header.checksum = htonl(31); // TODO: add crc
+  end_packet_header.checksum = htonl(0);
 
   Packet end_packet;
   end_packet.header = end_packet_header;
@@ -185,7 +186,7 @@ vector<Packet> packet_data_init(const string &filename) {
       data_header.type = htonl(DATA);
       data_header.seqNum = htonl(seqNum++);
       data_header.length = htonl(num_bytes_read);
-      data_header.checksum = htonl(0); // TODO: calculate checksum
+      data_header.checksum = htonl(crc32(buffer, num_bytes_read));
 
       Packet packet;
       packet.header = data_header;
