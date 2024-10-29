@@ -59,7 +59,7 @@ void end_connection(sockaddr_in &server_addr, int sockfd, int startSeqNum) {
   std::cout << "Ending connection..." << std::endl;
   // Initialize start packet header contents
   PacketHeader end_packet_header;
-  end_packet_header.type = htonl(START);
+  end_packet_header.type = htonl(END);
   end_packet_header.length = htonl(0);
   end_packet_header.seqNum = htonl(startSeqNum);
   end_packet_header.checksum = htonl(31); // TODO: add crc
@@ -103,14 +103,15 @@ void end_connection(sockaddr_in &server_addr, int sockfd, int startSeqNum) {
 
 void send_packet(Packet &packet, sockaddr_in &addr, int sockfd) {
   // Declare buffer
-  const ssize_t PACKET_SIZE = PACKET_HEADER_SIZE + packet.header.length;
+  const ssize_t PACKET_SIZE = PACKET_HEADER_SIZE + ntohl(packet.header.length);
   char buffer[PACKET_SIZE];
 
   // Copy packet header into buffer
   memcpy(buffer, &packet.header, sizeof(PacketHeader));
 
   // Copy packet data into buffer
-  memcpy(buffer + sizeof(PacketHeader), packet.data, packet.header.length);
+  memcpy(buffer + sizeof(PacketHeader), packet.data,
+         ntohl(packet.header.length));
 
   // Send packet to receiver
   ssize_t bytes_sent = sendto(sockfd, buffer, PACKET_SIZE, 0,
@@ -119,6 +120,7 @@ void send_packet(Packet &packet, sockaddr_in &addr, int sockfd) {
     cerr << "Failed to send all bytes in packet." << endl;
   }
 }
+
 bool receive_packet(Packet &packet, sockaddr_in &addr, int sockfd) {
   char buffer[MAX_PACKET_SIZE];
   socklen_t addr_len = sizeof(addr);
@@ -139,7 +141,15 @@ bool receive_packet(Packet &packet, sockaddr_in &addr, int sockfd) {
   packet.header.seqNum = ntohl(packet.header.seqNum);
   packet.header.length = ntohl(packet.header.length);
   packet.header.checksum = ntohl(packet.header.checksum);
-  cout << "Received packet header type: " << packet.header.type << endl;
+  if (packet.header.type == START) {
+    cout << "START packet received" << endl;
+  } else if (packet.header.type == ACK) {
+    cout << "ACK packet received" << endl;
+  } else if (packet.header.type == DATA) {
+    cout << "DATA packet received" << endl;
+  } else if (packet.header.type == END) {
+    cout << "END packet received" << endl;
+  }
   cout << "Received packet header seqNum: " << packet.header.seqNum << endl;
   cout << "Received packet header length: " << packet.header.length << endl;
   cout << "Received packet header checkSum: " << packet.header.checksum << endl;
@@ -169,11 +179,14 @@ vector<Packet> packet_data_init(const string &filename) {
     std::streamsize num_bytes_read = file.gcount();
 
     if (num_bytes_read > 0) {
+      PacketHeader data_header;
+      data_header.type = htonl(DATA);
+      data_header.seqNum = htonl(seqNum++);
+      data_header.length = htonl(num_bytes_read);
+      data_header.checksum = htonl(0); // TODO: calculate checksum
+
       Packet packet;
-      packet.header.type = DATA;
-      packet.header.seqNum = seqNum++;
-      packet.header.length = num_bytes_read;
-      packet.header.checksum = 0; // TODO: calculate checksum
+      packet.header = data_header;
 
       // Copy the data into struct
       std::memcpy(packet.data, buffer, num_bytes_read);

@@ -36,29 +36,65 @@ int main(int argc, char *argv[]) {
   }
 
   std::cout << "Listening..." << std::endl;
-  // Wait until START message is received to initiate connection
-  bool connection_received = false;
-  while (!connection_received) {
-    Packet start_packet;
-    if (receive_packet(start_packet, server_addr, sockfd) &&
-        start_packet.header.type == START) {
-      std::cout << "Received START message" << std::endl;
-      connection_received = true;
-      // Send ACK
-      PacketHeader ack_header;
-      ack_header.type = htonl(ACK);
-      ack_header.length = htonl(0);
-      ack_header.seqNum = htonl(start_packet.header.seqNum);
-      ack_header.checksum = htonl(0);
-      Packet ack_packet;
-      ack_packet.header = ack_header;
-      std::cout << "Sending ACK for START" << std::endl;
-      send_packet(ack_packet, server_addr, sockfd);
-    }
+  while (true) {
+    // Receive any packet
+    Packet packet;
+    if (receive_packet(packet, server_addr, sockfd)) {
+      if (packet.header.type == START) {
+        // Send acknowledgement
+        PacketHeader ack_header;
+        ack_header.type = htonl(ACK);
+        ack_header.length = htonl(0);
+        ack_header.seqNum = htonl(packet.header.seqNum);
+        ack_header.checksum = htonl(0);
+        Packet ack_packet;
+        ack_packet.header = ack_header;
+        std::cout << "Sending ACK for START" << std::endl;
+        send_packet(ack_packet, server_addr, sockfd);
+      } else if (packet.header.type == DATA) {
 
-    // Busy waiting
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      } else if (packet.header.type == END) {
+        // Send acknowledgement
+        PacketHeader ack_header;
+        ack_header.type = htonl(ACK);
+        ack_header.length = htonl(0);
+        ack_header.seqNum = htonl(packet.header.seqNum);
+        ack_header.checksum = htonl(0);
+        Packet ack_packet;
+        ack_packet.header = ack_header;
+        std::cout << "Sending ACK for END" << std::endl;
+        send_packet(ack_packet, server_addr, sockfd);
+
+        break; // TEMP
+      }
+    } else {
+      // Busy waiting
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
   }
+  // // Wait until START message is received to initiate connection
+  // bool connection_received = false;
+  // while (!connection_received) {
+  //   Packet start_packet;
+  //   if (receive_packet(start_packet, server_addr, sockfd) &&
+  //       start_packet.header.type == START) {
+  //     std::cout << "Received START message" << std::endl;
+  //     connection_received = true;
+  //     // Send ACK
+  //     PacketHeader ack_header;
+  //     ack_header.type = htonl(ACK);
+  //     ack_header.length = htonl(0);
+  //     ack_header.seqNum = htonl(start_packet.header.seqNum);
+  //     ack_header.checksum = htonl(0);
+  //     Packet ack_packet;
+  //     ack_packet.header = ack_header;
+  //     std::cout << "Sending ACK for START" << std::endl;
+  //     send_packet(ack_packet, server_addr, sockfd);
+  //   }
+
+  //   // Busy waiting
+  //   std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  // }
 
   // Close the socket
   close(sockfd);

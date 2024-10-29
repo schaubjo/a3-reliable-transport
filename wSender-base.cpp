@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
   start_connection(server_addr, sockfd, startSeqNum);
 
   // Send data packets until all have been received
-  send_packet(packets[packets.size() - 1], server_addr, sockfd);
+  send_packet(packets[0], server_addr, sockfd);
 
   // End connection
   end_connection(server_addr, sockfd, startSeqNum);
