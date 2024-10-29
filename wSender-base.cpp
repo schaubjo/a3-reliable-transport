@@ -8,13 +8,6 @@
 #include <unistd.h>
 #include <vector>
 
-#define MAX_PACKET_SIZE 1472
-#define START 0
-#define END 1
-#define DATA 2
-#define ACK 3
-const int RETRANSMISSION_TIMER = 500; // ms
-
 void start_connection(int sockfd, sockaddr_in &server_addr) {
   // Initialize start packet header contents
   PacketHeader start_packet;

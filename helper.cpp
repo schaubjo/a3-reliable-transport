@@ -38,8 +38,8 @@ vector<Packet> packet_data_init(string &filename) {
     return packets;
   }
 
-  int seqNum = 0;
-  char buffer[1456]; // 1472 packet bytes - 16 header bytes = 1456 data bytes
+  int seqNum = INITIAL_SEQNUM;
+  char buffer[MAX_PACKET_SIZE - PACKET_HEADER_SIZE];
 
   while (file) {
     file.read(buffer, sizeof(buffer));
@@ -47,7 +47,7 @@ vector<Packet> packet_data_init(string &filename) {
 
     if (num_bytes_read > 0) {
       Packet packet;
-      packet.header.type = 2;
+      packet.header.type = DATA;
       packet.header.seqNum = seqNum++;
       packet.header.length = num_bytes_read;
       packet.header.checksum = 0; // TODO: calculate checksum

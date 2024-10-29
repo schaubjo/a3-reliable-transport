@@ -7,12 +7,6 @@
 #include <thread>
 #include <unistd.h>
 
-#define MAX_PACKET_SIZE 1472
-#define START 0
-#define END 1
-#define DATA 2
-#define ACK 3
-
 int main(int argc, char *argv[]) {
   if (argc != 5) {
     printf("Usage: %s <port-num> <window-size> <output-dir> <log>\n", argv[0]);
@@ -28,11 +22,11 @@ int main(int argc, char *argv[]) {
 
   // Define server address
   memset(&server_addr, 0, sizeof(server_addr));
-  server_addr.sin_family = AF_INET;         // IPv4
-  server_addr.sin_port = htons(port_num);   // Port
-  server_addr.sin_addr.s_addr = INADDR_ANY; // Listen on all interfaces
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_port = htons(port_num);
+  server_addr.sin_addr.s_addr = INADDR_ANY;
 
-  // Bind the socket
+  // Bind socket
   if (bind(sockfd, (const struct sockaddr *)&server_addr, sizeof(server_addr)) <
       0) {
     perror("Bind failed");
