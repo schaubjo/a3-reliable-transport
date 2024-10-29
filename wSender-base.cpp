@@ -6,6 +6,7 @@
 #include <iostream>
 #include <thread>
 #include <unistd.h>
+#include <vector>
 
 #define MAX_PACKET_SIZE 1472
 #define START 0
@@ -68,6 +69,16 @@ int main(int argc, char *argv[]) {
   int window_size = std::stoi(argv[3]);
   std::string input_filename = argv[4];
   std::string log_filename = argv[5];
+
+  std::vector<Packet> packets = packet_data_init(input_filename);
+  std::cout << "Number of packets: " << packets.size() << std::endl;
+  std::cout << "Packet 1 length: " << packets[0].header.length << std::endl;
+  std::cout << "Packet 1 data: " << packets[0].data << std::endl;
+
+  std::cout << "Last packet length: "
+            << packets[packets.size() - 1].header.length << std::endl;
+  std::cout << "Last packet data: " << packets[packets.size() - 1].data
+            << std::endl;
 
   int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sockfd < 0) {
