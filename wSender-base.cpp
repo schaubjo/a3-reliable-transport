@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cstring>
 #include <iostream>
+#include <random>
 #include <string>
 #include <thread>
 #include <unistd.h>
@@ -44,15 +45,15 @@ int main(int argc, char *argv[]) {
       inet_addr(receiver_ip); // Localhost 127.0.0.1 for testing
 
   // Generate random initial seq num for START
-  int startSeqNum = 42; // TODO change to rand()
+  int start_seq_num = generate_start_seq_num();
 
   // Initiate connection
-  start_connection(server_addr, sockfd, startSeqNum);
+  start_connection(server_addr, sockfd, start_seq_num);
 
   // Send data packets until all have been received
   send_packet(packets[0], server_addr, sockfd);
 
   // End connection
-  end_connection(server_addr, sockfd, startSeqNum);
+  end_connection(server_addr, sockfd, start_seq_num);
   return 0;
 }

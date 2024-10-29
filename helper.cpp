@@ -6,18 +6,20 @@
 #include <iostream>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <random>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
+
 using namespace std;
 
-void start_connection(sockaddr_in &server_addr, int sockfd, int startSeqNum) {
+void start_connection(sockaddr_in &server_addr, int sockfd, int start_seq_num) {
   // Initialize start packet header contents
   PacketHeader start_packet_header;
   start_packet_header.type = htonl(START);
   start_packet_header.length = htonl(0);
-  start_packet_header.seqNum = htonl(startSeqNum);
+  start_packet_header.seqNum = htonl(start_seq_num);
   start_packet_header.checksum = htonl(31); // TODO: add crc
 
   Packet start_packet;
@@ -55,13 +57,13 @@ void start_connection(sockaddr_in &server_addr, int sockfd, int startSeqNum) {
   }
 }
 
-void end_connection(sockaddr_in &server_addr, int sockfd, int startSeqNum) {
+void end_connection(sockaddr_in &server_addr, int sockfd, int start_seq_num) {
   std::cout << "Ending connection..." << std::endl;
   // Initialize start packet header contents
   PacketHeader end_packet_header;
   end_packet_header.type = htonl(END);
   end_packet_header.length = htonl(0);
-  end_packet_header.seqNum = htonl(startSeqNum);
+  end_packet_header.seqNum = htonl(start_seq_num);
   end_packet_header.checksum = htonl(31); // TODO: add crc
 
   Packet end_packet;
@@ -196,4 +198,12 @@ vector<Packet> packet_data_init(const string &filename) {
     }
   }
   return packets;
+}
+
+int generate_start_seq_num() {
+  // Generate random number between 0 and 100
+  random_device rd;
+  mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
+  uniform_int_distribution<int> dist(0, 100);
+  return dist(gen);
 }
