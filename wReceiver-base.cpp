@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
   const std::string log = argv[4];
 
   int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-  struct sockaddr_in server_addr, client_addr;
+  struct sockaddr_in server_addr;
 
   // Define server address
   memset(&server_addr, 0, sizeof(server_addr));

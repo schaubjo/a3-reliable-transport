@@ -45,7 +45,6 @@ int main(int argc, char *argv[]) {
   }
 
   struct sockaddr_in server_addr;
-  socklen_t addr_len = sizeof(server_addr);
 
   // Define server address
   memset(&server_addr, 0, sizeof(server_addr));
