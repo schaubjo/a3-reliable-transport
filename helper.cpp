@@ -14,27 +14,29 @@ using namespace std;
 
 void start_connection(int sockfd, sockaddr_in &server_addr) {
   // Initialize start packet header contents
-  PacketHeader start_packet;
-  start_packet.type = htonl(START);
-  start_packet.length = htonl(0);
-  start_packet.seqNum = htonl(4);    // TODO: change to rand()
-  start_packet.checksum = htonl(31); // TODO: add crc
+  PacketHeader start_packet_header;
+  start_packet_header.type = htonl(START);
+  start_packet_header.length = htonl(0);
+  start_packet_header.seqNum = htonl(4);    // TODO: change to rand()
+  start_packet_header.checksum = htonl(31); // TODO: add crc
 
+  Packet start_packet;
+  start_packet.header = start_packet_header;
   // Send START message
   bool acked = false;
 
   while (!acked) {
     std::cout << "Sending START" << std::endl;
-    send_packet_header(start_packet, sockfd, server_addr);
+    send_packet(start_packet, server_addr, sockfd);
 
     // Resend START if not acknowledged within 500 ms
     auto start_time = std::chrono::steady_clock::now();
     while (true) {
       // Check for ACK
-      PacketHeader ack_header;
-      if (receive_packet_header(ack_header, sockfd, server_addr) &&
-          ntohl(ack_header.type) == ACK &&
-          ntohl(ack_header.seqNum) == htonl(start_packet.seqNum)) {
+      Packet ack_packet;
+      if (receive_packet(ack_packet, server_addr, sockfd) &&
+          ack_packet.header.type == ACK &&
+          ack_packet.header.seqNum == htonl(start_packet.header.seqNum)) {
         std::cout << "ACK received for START" << std::endl;
         acked = true;
         break;
@@ -61,41 +63,55 @@ void end_connection(int sockfd, sockaddr_in &server_addr) {
   close(sockfd);
 }
 
-void send_packet(Packet &packet, int sockfd, sockaddr_in &addr) {
-  // Send packet header
-  send_packet_header(packet.header, sockfd, addr);
+void send_packet(Packet &packet, sockaddr_in &addr, int sockfd) {
+  // Declare buffer
+  const ssize_t PACKET_SIZE = PACKET_HEADER_SIZE + packet.header.length;
+  char buffer[PACKET_SIZE];
 
-  // Send packet data
-  if (packet.header.length > 0) {
-    send_packet_data(addr, sockfd, packet.data, packet.header.length);
-  }
-}
+  // Copy packet header into buffer
+  memcpy(buffer, &packet.header, sizeof(PacketHeader));
 
-void send_packet_header(PacketHeader &packet_header, int sockfd,
-                        sockaddr_in &addr) {
-  if (sendto(sockfd, &packet_header, sizeof(packet_header), 0,
-             (const struct sockaddr *)&addr, sizeof(addr)) < 0) {
-    cerr << "Failed to send packet header" << endl;
-  }
-}
+  // Copy packet data into buffer
+  memcpy(buffer + sizeof(PacketHeader), packet.data, packet.header.length);
 
-void send_packet_data(sockaddr_in &addr, int sockfd, const char *data,
-                      int data_length) {
-  ssize_t bytes_sent = sendto(sockfd, data, data_length, 0,
+  // Send packet to receiver
+  ssize_t bytes_sent = sendto(sockfd, buffer, PACKET_SIZE, 0,
                               (const struct sockaddr *)&addr, sizeof(addr));
-
-  if (bytes_sent != data_length) {
-    cerr << "Failed to send all the data in packet" << endl;
+  if (bytes_sent != PACKET_SIZE) {
+    cerr << "Failed to send all bytes in packet." << endl;
   }
 }
+bool receive_packet(Packet &packet, sockaddr_in &addr, int sockfd) {
+  char buffer[MAX_PACKET_SIZE];
+  socklen_t addr_len = sizeof(addr);
 
-bool receive_packet_header(PacketHeader &packet_header, int sockfd,
-                           sockaddr_in &addr) {
-  socklen_t addrLen = sizeof(addr);
   ssize_t bytes_received =
-      recvfrom(sockfd, &packet_header, sizeof(PacketHeader), MSG_DONTWAIT,
-               (struct sockaddr *)&addr, &addrLen);
-  return bytes_received == sizeof(packet_header);
+      recvfrom(sockfd, buffer, MAX_PACKET_SIZE, MSG_DONTWAIT,
+               (struct sockaddr *)&addr, &addr_len);
+  if (bytes_received <= 0) {
+    // Nothing to receive
+    return false;
+  }
+
+  // Get header from buffer
+  memcpy(&packet.header, buffer, sizeof(PacketHeader));
+
+  // Fix network byte order
+  packet.header.type = ntohl(packet.header.type);
+  packet.header.seqNum = ntohl(packet.header.seqNum);
+  packet.header.length = ntohl(packet.header.length);
+  packet.header.checksum = ntohl(packet.header.checksum);
+  cout << "Received packet header type: " << packet.header.type << endl;
+  cout << "Received packet header seqNum: " << packet.header.seqNum << endl;
+  cout << "Received packet header length: " << packet.header.length << endl;
+  cout << "Received packet header checkSum: " << packet.header.checksum << endl;
+
+  // If this is a data message, get data from buffer
+  int data_length = packet.header.length;
+  if (data_length > 0) {
+    memcpy(packet.data, buffer + sizeof(PacketHeader), data_length);
+  }
+  return true;
 }
 
 vector<Packet> packet_data_init(const string &filename) {

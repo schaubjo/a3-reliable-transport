@@ -36,48 +36,28 @@ int main(int argc, char *argv[]) {
   }
 
   std::cout << "Listening..." << std::endl;
-
-  while (true) {
-    // Wait until START message is received to initiate connection
-    bool connection_received = false;
-    while (!connection_received) {
-      PacketHeader start_header;
-      if (receive_packet_header(start_header, sockfd, server_addr) &&
-          ntohl(start_header.type == START)) {
-        std::cout << "Received START message" << std::endl;
-        connection_received = true;
-        // Send ACK
-        PacketHeader ack_header;
-        ack_header.type = htonl(ACK);
-        ack_header.length = htonl(0);
-        ack_header.seqNum = start_header.seqNum;
-        ack_header.checksum = htonl(0);
-        std::cout << "Sending ACK for START" << std::endl;
-        send_packet_header(ack_header, sockfd, server_addr);
-      }
-
-      // Busy waiting
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  // Wait until START message is received to initiate connection
+  bool connection_received = false;
+  while (!connection_received) {
+    Packet start_packet;
+    if (receive_packet(start_packet, server_addr, sockfd) &&
+        start_packet.header.type == START) {
+      std::cout << "Received START message" << std::endl;
+      connection_received = true;
+      // Send ACK
+      PacketHeader ack_header;
+      ack_header.type = htonl(ACK);
+      ack_header.length = htonl(0);
+      ack_header.seqNum = htonl(start_packet.header.seqNum);
+      ack_header.checksum = htonl(0);
+      Packet ack_packet;
+      ack_packet.header = ack_header;
+      std::cout << "Sending ACK for START" << std::endl;
+      send_packet(ack_packet, server_addr, sockfd);
     }
 
-    // Receive packets until END message arrives
-    std::cout << "Waiting for data..." << std::endl;
-    bool end = false;
-    while (!end) {
-      PacketHeader packet_header;
-      if (receive_packet_header(packet_header, sockfd, server_addr)) {
-        if (ntohl(packet_header.type == END)) {
-          // TODO: check seqnum to be same as start
-        }
-        if (ntohl(packet_header.type == DATA)) {
-          std::cout << "DATA packet received." << std::endl;
-          std::cout << "Seqnum = " << packet_header.seqNum << std::endl;
-          std::cout << "Length = " << packet_header.length << std::endl;
-        }
-      }
-      // Busy waiting
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
+    // Busy waiting
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
   // Close the socket
