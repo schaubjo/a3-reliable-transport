@@ -53,6 +53,14 @@ void start_connection(int sockfd, sockaddr_in &server_addr) {
   }
 }
 
+void end_connection(int sockfd, sockaddr_in &server_addr) {
+  std::cout << "Ending connection..." << std::endl;
+  // TODO: Send END packet and wait for ACK
+
+  // Close the socket
+  close(sockfd);
+}
+
 void send_packet_header(PacketHeader &packet_header, int sockfd,
                         sockaddr_in &addr) {
   if (sendto(sockfd, &packet_header, sizeof(packet_header), 0,

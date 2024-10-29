@@ -22,6 +22,8 @@ struct Packet {
 
 void start_connection(int sockfd, sockaddr_in &server_addr);
 
+void end_connection(int sockfd, sockaddr_in &server_addr);
+
 void send_packet_header(PacketHeader &packet_header, int sockfd,
                         sockaddr_in &addr);
 

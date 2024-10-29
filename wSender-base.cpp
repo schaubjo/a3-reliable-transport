@@ -26,6 +26,8 @@ int main(int argc, char *argv[]) {
 
   // Transform input file into vector of packets
   std::vector<Packet> packets = packet_data_init(input_filename);
+
+  // Testing info
   std::cout << "Number of packets: " << packets.size() << std::endl;
   std::cout << "Packet 1 length: " << packets[0].header.length << std::endl;
   std::cout << "Packet 1 data: " << packets[0].data << std::endl;
@@ -52,10 +54,12 @@ int main(int argc, char *argv[]) {
   server_addr.sin_addr.s_addr =
       inet_addr(receiver_ip); // Localhost 127.0.0.1 for testing
 
-  // Send START packet to initiate connection
+  // Initiate connection
   start_connection(sockfd, server_addr);
 
-  // Close the socket
-  close(sockfd);
+  // Send data packets until all have been received
+
+  // End connection
+  end_connection(sockfd, server_addr);
   return 0;
 }
