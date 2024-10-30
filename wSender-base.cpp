@@ -28,19 +28,8 @@ int main(int argc, char *argv[]) {
   const std::string log_filename = argv[5];
 
   // Open the file in truncate mode to clear its contents
-  std::ofstream log(log_filename, std::ios_base::trunc);
-  if (!log.is_open()) {
-    std::cerr << "Failed to truncate log at start." << std::endl;
-    return 1;
-  }
-  log.close(); // Close after clearing
+  std::ofstream log = truncate_log_and_set_append(log_filename);
 
-  // Reopen the log file in append mode for logging
-  log.open(log_filename, std::ios_base::app);
-  if (!log.is_open()) {
-    std::cerr << "Failed to open log for appending." << std::endl;
-    return 1;
-  }
   // Transform input file into vector of packets
   std::vector<Packet> packets = packet_data_init(input_filename);
 

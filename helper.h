@@ -35,4 +35,7 @@ bool receive_packet(Packet &packet, sockaddr_in &addr, int sockfd,
 std::vector<Packet> packet_data_init(const std::string &filename);
 
 int generate_start_seq_num();
+
+std::ofstream truncate_log_and_set_append(std::string log_filename);
+
 #endif

@@ -222,16 +222,16 @@ int generate_start_seq_num() {
 }
 
 ofstream truncate_log_and_set_append(string log_filename) {
-  ofstream log(log_filename, std::ios_base::trunc);
+  ofstream log(log_filename, ios_base::trunc);
   if (!log.is_open()) {
-    std::cerr << "Failed to truncate log at start." << std::endl;
+    cerr << "Failed to truncate log at start." << endl;
   }
   log.close(); // Close after clearing
 
   // Reopen the log file in append mode for logging
-  log.open(log_filename, std::ios_base::app);
+  log.open(log_filename, ios_base::app);
   if (!log.is_open()) {
-    std::cerr << "Failed to open log for appending." << std::endl;
+    cerr << "Failed to open log for appending." << endl;
   }
 
   return log;
