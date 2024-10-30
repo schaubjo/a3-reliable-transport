@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <chrono>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <random>
 #include <string>
@@ -26,6 +27,20 @@ int main(int argc, char *argv[]) {
   const std::string input_filename = argv[4];
   const std::string log_filename = argv[5];
 
+  // Open the file in truncate mode to clear its contents
+  std::ofstream log(log_filename, std::ios_base::trunc);
+  if (!log.is_open()) {
+    std::cerr << "Failed to truncate log at start." << std::endl;
+    return 1;
+  }
+  log.close(); // Close after clearing
+
+  // Reopen the log file in append mode for logging
+  log.open(log_filename, std::ios_base::app);
+  if (!log.is_open()) {
+    std::cerr << "Failed to open log for appending." << std::endl;
+    return 1;
+  }
   // Transform input file into vector of packets
   std::vector<Packet> packets = packet_data_init(input_filename);
 
@@ -49,47 +64,50 @@ int main(int argc, char *argv[]) {
   int start_seq_num = generate_start_seq_num();
 
   // Initiate connection
-  start_connection(server_addr, sockfd, start_seq_num);
+  start_connection(server_addr, sockfd, start_seq_num, log);
 
   // Send data packets until all have been received
 
-  int window_start = 0;
-  while (true) {
-    // Send all packets in window
-    int window_end =
-        std::min(window_start + WINDOW_SIZE, static_cast<int>(packets.size()));
-    for (int i = window_start; i < window_end; i++) {
-      send_packet(packets[i], server_addr, sockfd);
-    }
+  // int window_start = 0;
+  // while (true) {
+  //   // Send all packets in window
+  //   int window_end =
+  //       std::min(window_start + WINDOW_SIZE,
+  //       static_cast<int>(packets.size()));
+  //   for (int i = window_start; i < window_end; i++) {
+  //     send_packet(packets[i], server_addr, sockfd);
+  //   }
 
-    // Wait for acks
-    auto start_time = std::chrono::steady_clock::now();
-    while (true) {
-      Packet packet;
-      if (receive_packet(packet, server_addr, sockfd) &&
-          packet.header.type == ACK) {
-        // If an ACK was received
-        int acked_seq_num = packet.header.seqNum;
-        if (window_start > acked_seq_num && acked_seq_num < window_end) {
-          // TODO: Receiver is expecting more data; slide window and send new packets
-        }
-      }
+  //   // Wait for acks
+  //   auto start_time = std::chrono::steady_clock::now();
+  //   while (true) {
+  //     Packet packet;
+  //     if (receive_packet(packet, server_addr, sockfd) &&
+  //         packet.header.type == ACK) {
+  //       // If an ACK was received
+  //       int acked_seq_num = packet.header.seqNum;
+  //       if (window_start > acked_seq_num && acked_seq_num < window_end) {
+  //         // TODO: Receiver is expecting more data; slide window and send new
+  //         // packets
+  //       }
+  //     }
 
-      // Check if timeout has elapsed
-      auto elapsed_time = std::chrono::steady_clock::now() - start_time;
-      if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time)
-              .count() > RETRANSMISSION_TIMER) {
-        // Resend all packets in the current window
-        for (int i = window_start; i < window_end; i++) {
-          send_packet(packets[i], server_addr, sockfd);
-        }
-        start_time = std::chrono::steady_clock::now(); // Reset timer
-      }
-    }
-    // send_packet(packets[0], server_addr, sockfd);
-    // send_packet(packets[packets.size() - 1], server_addr, sockfd);
-    // End connection
-    end_connection(server_addr, sockfd, start_seq_num);
-    return 0;
-  }
+  //     // Check if timeout has elapsed
+  //     auto elapsed_time = std::chrono::steady_clock::now() - start_time;
+  //     if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time)
+  //             .count() > RETRANSMISSION_TIMER) {
+  //       // Resend all packets in the current window
+  //       for (int i = window_start; i < window_end; i++) {
+  //         send_packet(packets[i], server_addr, sockfd);
+  //       }
+  //       start_time = std::chrono::steady_clock::now(); // Reset timer
+  //     }
+  //   }
+  // }
+  // End connection
+  end_connection(server_addr, sockfd, start_seq_num, log);
+
+  // Close log file
+  log.close();
+  return 0;
 }

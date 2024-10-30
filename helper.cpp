@@ -15,7 +15,8 @@
 
 using namespace std;
 
-void start_connection(sockaddr_in &server_addr, int sockfd, int start_seq_num) {
+void start_connection(sockaddr_in &server_addr, int sockfd, int start_seq_num,
+                      ofstream &log) {
   // Initialize start packet header contents
   PacketHeader start_packet_header;
   start_packet_header.type = htonl(START);
@@ -30,14 +31,14 @@ void start_connection(sockaddr_in &server_addr, int sockfd, int start_seq_num) {
   while (!acked) {
     // Send START message until acknowledged
     std::cout << "Sending START" << std::endl;
-    send_packet(start_packet, server_addr, sockfd);
+    send_packet(start_packet, server_addr, sockfd, log);
 
     // Resend if not acknowledged within 500 ms
     auto start_time = std::chrono::steady_clock::now();
     while (true) {
       // Check for ACK
       Packet ack_packet;
-      if (receive_packet(ack_packet, server_addr, sockfd) &&
+      if (receive_packet(ack_packet, server_addr, sockfd, log) &&
           ack_packet.header.type == ACK &&
           ack_packet.header.seqNum == htonl(start_packet.header.seqNum)) {
         std::cout << "ACK received for START" << std::endl;
@@ -58,7 +59,8 @@ void start_connection(sockaddr_in &server_addr, int sockfd, int start_seq_num) {
   }
 }
 
-void end_connection(sockaddr_in &server_addr, int sockfd, int start_seq_num) {
+void end_connection(sockaddr_in &server_addr, int sockfd, int start_seq_num,
+                    ofstream &log) {
   std::cout << "Ending connection..." << std::endl;
   // Initialize start packet header contents
   PacketHeader end_packet_header;
@@ -74,14 +76,14 @@ void end_connection(sockaddr_in &server_addr, int sockfd, int start_seq_num) {
   while (!acked) {
     // Send START message until acknowledged
     std::cout << "Sending END" << std::endl;
-    send_packet(end_packet, server_addr, sockfd);
+    send_packet(end_packet, server_addr, sockfd, log);
 
     // Resend if not acknowledged within 500 ms
     auto start_time = std::chrono::steady_clock::now();
     while (true) {
       // Check for ACK
       Packet ack_packet;
-      if (receive_packet(ack_packet, server_addr, sockfd) &&
+      if (receive_packet(ack_packet, server_addr, sockfd, log) &&
           ack_packet.header.type == ACK &&
           ack_packet.header.seqNum == htonl(end_packet.header.seqNum)) {
         std::cout << "ACK received for END" << std::endl;
@@ -104,7 +106,7 @@ void end_connection(sockaddr_in &server_addr, int sockfd, int start_seq_num) {
   close(sockfd);
 }
 
-void send_packet(Packet &packet, sockaddr_in &addr, int sockfd) {
+void send_packet(Packet &packet, sockaddr_in &addr, int sockfd, ofstream &log) {
   // Declare buffer
   const ssize_t PACKET_SIZE = PACKET_HEADER_SIZE + ntohl(packet.header.length);
   char buffer[PACKET_SIZE];
@@ -122,9 +124,15 @@ void send_packet(Packet &packet, sockaddr_in &addr, int sockfd) {
   if (bytes_sent != PACKET_SIZE) {
     cerr << "Failed to send all bytes in packet." << endl;
   }
+
+  // Log info
+  log << htonl(packet.header.type) << " " << htonl(packet.header.seqNum) << " "
+      << htonl(packet.header.length) << " " << htonl(packet.header.checksum)
+      << endl;
 }
 
-bool receive_packet(Packet &packet, sockaddr_in &addr, int sockfd) {
+bool receive_packet(Packet &packet, sockaddr_in &addr, int sockfd,
+                    ofstream &log) {
   char buffer[MAX_PACKET_SIZE];
   socklen_t addr_len = sizeof(addr);
 
@@ -162,6 +170,10 @@ bool receive_packet(Packet &packet, sockaddr_in &addr, int sockfd) {
   if (data_length > 0) {
     memcpy(packet.data, buffer + sizeof(PacketHeader), data_length);
   }
+
+  // Log info
+  log << packet.header.type << " " << packet.header.seqNum << " "
+      << packet.header.length << " " << packet.header.checksum << endl;
   return true;
 }
 
@@ -207,4 +219,20 @@ int generate_start_seq_num() {
   mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
   uniform_int_distribution<int> dist(0, 100);
   return dist(gen);
+}
+
+ofstream truncate_log_and_set_append(string log_filename) {
+  ofstream log(log_filename, std::ios_base::trunc);
+  if (!log.is_open()) {
+    std::cerr << "Failed to truncate log at start." << std::endl;
+  }
+  log.close(); // Close after clearing
+
+  // Reopen the log file in append mode for logging
+  log.open(log_filename, std::ios_base::app);
+  if (!log.is_open()) {
+    std::cerr << "Failed to open log for appending." << std::endl;
+  }
+
+  return log;
 }
