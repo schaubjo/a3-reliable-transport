@@ -53,7 +53,6 @@ int main(int argc, char *argv[]) {
   std::ofstream log = truncate_log_and_set_append(log_filename);
 
   std::cout << "Listening..." << std::endl;
-  // TODO: Add window stuff
   std::unordered_map<int, Packet> packets_received;
 
   // Holds the START/END seqNum of the current connection
@@ -78,7 +77,6 @@ int main(int argc, char *argv[]) {
         }
 
       } else if (packet.header.type == DATA && connection_seq_num != -1 &&
-                 window_start <= packet.header.seqNum &&
                  packet.header.seqNum < window_end && valid_checksum(packet)) {
 
         // Mark packet as received
