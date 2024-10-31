@@ -126,9 +126,9 @@ void send_packet(Packet &packet, sockaddr_in &addr, int sockfd, ofstream &log) {
   }
 
   // Log info
-  log << htonl(packet.header.type) << " " << htonl(packet.header.seqNum) << " "
-      << htonl(packet.header.length) << " " << htonl(packet.header.checksum)
-      << endl;
+  log << "S " << htonl(packet.header.type) << " " << htonl(packet.header.seqNum)
+      << " " << htonl(packet.header.length) << " "
+      << htonl(packet.header.checksum) << endl;
 }
 
 bool receive_packet(Packet &packet, sockaddr_in &addr, int sockfd,
@@ -173,7 +173,7 @@ bool receive_packet(Packet &packet, sockaddr_in &addr, int sockfd,
   }
 
   // Log info
-  log << packet.header.type << " " << packet.header.seqNum << " "
+  log << "R " << packet.header.type << " " << packet.header.seqNum << " "
       << packet.header.length << " " << packet.header.checksum << endl;
   return true;
 }
@@ -218,7 +218,7 @@ int generate_start_seq_num() {
   // Generate random number between 0 and 100
   random_device rd;
   mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
-  uniform_int_distribution<int> dist(0, 100);
+  uniform_int_distribution<int> dist(0, 10000);
   return dist(gen);
 }
 

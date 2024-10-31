@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
 
   // Transform input file into vector of packets
   std::vector<Packet> packets = packet_data_init(input_filename);
-
+  std::cout << packets.size() << std::endl;
   // Socket setup
   int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sockfd < 0) {
@@ -70,19 +70,22 @@ int main(int argc, char *argv[]) {
         packet.header.type == ACK) {
       // If an ACK was received
       int acked_seq_num = packet.header.seqNum;
-      if (window_start < acked_seq_num && acked_seq_num < window_end) {
+      if (window_start < acked_seq_num) {
         // Receiver is expecting more data; slide window and send new packets
         if (acked_seq_num == packets.size()) {
+          std::cout << "ALL PACKETS SENT" << std::endl;
           // Finish if all packets sent
           break;
         }
-        int prev_end = window_end;
-        window_start = acked_seq_num;
-        window_end = std::min(window_start + WINDOW_SIZE,
-                              static_cast<int>(packets.size()));
-        for (int i = prev_end; i < window_end; i++) {
-          // Send packets that were just added to this window
-          send_packet(packets[i], server_addr, sockfd, log);
+        if (acked_seq_num >= window_end) {
+          int prev_end = window_end;
+          window_start = acked_seq_num;
+          window_end = std::min(window_start + WINDOW_SIZE,
+                                static_cast<int>(packets.size()));
+          for (int i = prev_end; i < window_end; i++) {
+            // Send packets that were just added to this window
+            send_packet(packets[i], server_addr, sockfd, log);
+          }
         }
 
         // Reset timer
