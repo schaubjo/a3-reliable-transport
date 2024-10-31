@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
   // Wait for acks
   auto start_time = std::chrono::steady_clock::now();
 
-  while (window_start < packets.size()) {
+  while (window_start < static_cast<int>(packets.size())) {
     Packet packet;
     if (receive_packet(packet, server_addr, sockfd, log) &&
         packet.header.type == ACK) {
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
       int acked_seq_num = packet.header.seqNum;
       if (window_start < acked_seq_num) {
         // Receiver is expecting more data; slide window and send new packets
-        if (acked_seq_num == packets.size()) {
+        if (acked_seq_num == static_cast<int>(packets.size())) {
           std::cout << "ALL PACKETS SENT" << std::endl;
           // Finish if all packets sent
           break;
