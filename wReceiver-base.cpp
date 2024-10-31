@@ -79,7 +79,9 @@ int main(int argc, char *argv[]) {
 
       } else if (packet.header.type == DATA && connection_seq_num != -1 &&
                  window_start <= packet.header.seqNum &&
-                 packet.header.seqNum < window_end) {
+                 packet.header.seqNum < window_end && valid_checksum(packet)) {
+
+        // Mark packet as received
         packets_received[packet.header.seqNum] = packet;
 
         // Adjust window as necessary

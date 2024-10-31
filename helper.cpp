@@ -152,19 +152,6 @@ bool receive_packet(Packet &packet, sockaddr_in &addr, int sockfd,
   packet.header.seqNum = ntohl(packet.header.seqNum);
   packet.header.length = ntohl(packet.header.length);
   packet.header.checksum = ntohl(packet.header.checksum);
-  // if (packet.header.type == START) {
-  //   cout << "START packet received" << endl;
-  // } else if (packet.header.type == ACK) {
-  //   cout << "ACK packet received" << endl;
-  // } else if (packet.header.type == DATA) {
-  //   cout << "DATA packet received" << endl;
-  // } else if (packet.header.type == END) {
-  //   cout << "END packet received" << endl;
-  // }
-  // cout << "Received packet header seqNum: " << packet.header.seqNum << endl;
-  // cout << "Received packet header length: " << packet.header.length << endl;
-  // cout << "Received packet header checkSum: " << packet.header.checksum <<
-  // endl;
 
   // If this is a data message, get data from buffer
   int data_length = packet.header.length;
@@ -270,4 +257,8 @@ void write_data(std::string output_dir, std::string filename,
     // std::cout << packets_received[i].data << std::endl;
     i++;
   }
+}
+
+bool valid_checksum(Packet &packet) {
+  return crc32(packet.data, packet.header.length) == packet.header.checksum;
 }

@@ -43,4 +43,6 @@ void send_ack(sockaddr_in &addr, int sockfd, std::ofstream &log, int seq_num);
 
 void write_data(std::string output_dir, std::string filename,
                 std::unordered_map<int, Packet> packets_received);
+
+bool valid_checksum(Packet &packet);
 #endif
