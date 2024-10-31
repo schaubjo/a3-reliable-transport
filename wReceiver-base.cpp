@@ -78,7 +78,6 @@ int main(int argc, char *argv[]) {
 
       } else if (packet.header.type == DATA && connection_seq_num != -1 &&
                  packet.header.seqNum < window_end && valid_checksum(packet)) {
-
         // Mark packet as received
         packets_received[packet.header.seqNum] = packet;
 
@@ -90,10 +89,15 @@ int main(int argc, char *argv[]) {
         send_ack(server_addr, sockfd, log, window_start);
       } else if (packet.header.type == END) {
         // If the current connection is closing
+        std::string output_file =
+            "FILE-" + std::to_string(connection_count) + ".out";
         if (connection_seq_num == packet.header.seqNum) {
-          std::string output_file =
-              "FILE-" + std::to_string(connection_count) + ".out";
-          write_data(output_dir, output_file, packets_received);
+          std::string output_path = std::filesystem::current_path() /
+                                    output_dir.substr(1) / output_file;
+          std::cout << "current_path " << std::filesystem::current_path()
+                    << std::endl;
+          std::cout << "output_dir " << output_path << std::endl;
+          write_data(output_path, packets_received);
 
           // Erase data for this connection
           window_start = 0;

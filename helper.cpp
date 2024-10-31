@@ -239,22 +239,17 @@ void send_ack(sockaddr_in &addr, int sockfd, ofstream &log, int seq_num) {
   send_packet(ack_packet, addr, sockfd, log);
 }
 
-void write_data(std::string output_dir, std::string filename,
+void write_data(std::string output_path,
                 std::unordered_map<int, Packet> packets_received) {
 
-  // std::ofstream outFile(output_dir + "/" + filename,
-  //                       std::ios::binary | std::ios::trunc);
-  // TODO: add output_dir
-  std::ofstream outFile(filename, std::ios::binary | std::ios::trunc);
+  ofstream outFile(output_path, std::ios::binary | std::ios::trunc);
   if (!outFile) {
-    std::cerr << "Error opening file for writing: "
-              << output_dir + "/" + filename << std::endl;
+    std::cerr << "Error opening file for writing: " << output_path << std::endl;
     return;
   }
   int i = 0;
   while (packets_received.find(i) != packets_received.end()) {
     outFile.write(packets_received[i].data, packets_received[i].header.length);
-    // std::cout << packets_received[i].data << std::endl;
     i++;
   }
 }
