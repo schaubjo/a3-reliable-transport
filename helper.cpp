@@ -126,9 +126,9 @@ void send_packet(Packet &packet, sockaddr_in &addr, int sockfd, ofstream &log) {
   }
 
   // Log info
-  log << "S " << htonl(packet.header.type) << " " << htonl(packet.header.seqNum)
-      << " " << htonl(packet.header.length) << " "
-      << htonl(packet.header.checksum) << endl;
+  log << "S " << ntohl(packet.header.type) << " " << ntohl(packet.header.seqNum)
+      << " " << ntohl(packet.header.length) << " "
+      << ntohl(packet.header.checksum) << endl;
 }
 
 bool receive_packet(Packet &packet, sockaddr_in &addr, int sockfd,

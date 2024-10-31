@@ -66,7 +66,9 @@ int main(int argc, char *argv[]) {
 
         // Only accept START if no connection in progress or duplicate START
         if (connection_seq_num == -1 ||
-            connection_seq_num == htonl(packet.header.seqNum)) {
+            connection_seq_num == packet.header.seqNum) {
+          // std::cout << "RECEIVER START 2" << std::endl;
+
           // Send acknowledgement
           PacketHeader ack_header;
           ack_header.type = htonl(ACK);
@@ -77,7 +79,7 @@ int main(int argc, char *argv[]) {
           ack_packet.header = ack_header;
           send_packet(ack_packet, server_addr, sockfd, log);
 
-          connection_seq_num = htonl(packet.header.seqNum);
+          connection_seq_num = packet.header.seqNum;
         }
 
       } else if (packet.header.type == DATA && connection_seq_num != -1 &&
@@ -102,7 +104,10 @@ int main(int argc, char *argv[]) {
 
       } else if (packet.header.type == END) {
         // If the current connection is closing
+        // std::cout << packet.header.seqNum << std::endl;
+        // std::cout << connection_seq_num << std::endl;
         if (connection_seq_num == packet.header.seqNum) {
+          // std::cout << "ERASING" << std::endl;
           // Erase data for this connection
           window_start = 0;
           window_end = window_start + WINDOW_SIZE;
