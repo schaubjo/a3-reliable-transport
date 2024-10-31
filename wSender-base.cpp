@@ -57,42 +57,56 @@ int main(int argc, char *argv[]) {
 
   // Send data packets until all have been received
 
-  // int window_start = 0;
-  // while (true) {
-  //   // Send all packets in window
-  //   int window_end =
-  //       std::min(window_start + WINDOW_SIZE,
-  //       static_cast<int>(packets.size()));
-  //   for (int i = window_start; i < window_end; i++) {
-  //     send_packet(packets[i], server_addr, sockfd);
-  //   }
+  int window_start = 0;
+  while (window_start < packets.size()) {
+    // Send all packets in window
+    int window_end =
+        std::min(window_start + WINDOW_SIZE, static_cast<int>(packets.size()));
+    for (int i = window_start; i < window_end; i++) {
+      send_packet(packets[i], server_addr, sockfd, log);
+    }
 
-  //   // Wait for acks
-  //   auto start_time = std::chrono::steady_clock::now();
-  //   while (true) {
-  //     Packet packet;
-  //     if (receive_packet(packet, server_addr, sockfd) &&
-  //         packet.header.type == ACK) {
-  //       // If an ACK was received
-  //       int acked_seq_num = packet.header.seqNum;
-  //       if (window_start > acked_seq_num && acked_seq_num < window_end) {
-  //         // TODO: Receiver is expecting more data; slide window and send new
-  //         // packets
-  //       }
-  //     }
+    // Wait for acks
+    auto start_time = std::chrono::steady_clock::now();
+    while (true) {
+      Packet packet;
+      if (receive_packet(packet, server_addr, sockfd, log) &&
+          packet.header.type == ACK) {
+        // If an ACK was received
+        int acked_seq_num = packet.header.seqNum;
+        if (window_start > acked_seq_num && acked_seq_num < window_end) {
+          // Receiver is expecting more data; slide window and send new packets
+          if (acked_seq_num == packets.size()) {
+            // Finish if all packets sent
+            break;
+          }
+          int prev_end = window_end;
+          window_end = std::min(window_start + WINDOW_SIZE,
+                                static_cast<int>(packets.size()));
+          window_start = acked_seq_num;
+          for (int i = prev_end; i < window_end; i++) {
+            // Send packets that were just added to this window
+            send_packet(packets[i], server_addr, sockfd, log);
+          }
 
-  //     // Check if timeout has elapsed
-  //     auto elapsed_time = std::chrono::steady_clock::now() - start_time;
-  //     if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time)
-  //             .count() > RETRANSMISSION_TIMER) {
-  //       // Resend all packets in the current window
-  //       for (int i = window_start; i < window_end; i++) {
-  //         send_packet(packets[i], server_addr, sockfd);
-  //       }
-  //       start_time = std::chrono::steady_clock::now(); // Reset timer
-  //     }
-  //   }
-  // }
+          // Reset timer
+          start_time = std::chrono::steady_clock::now();
+        }
+      }
+
+      // Check for timeout
+      auto elapsed_time = std::chrono::steady_clock::now() - start_time;
+      if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time)
+              .count() > RETRANSMISSION_TIMER) {
+        // Resend packets in window
+        for (int i = window_start; i < window_end; i++) {
+          send_packet(packets[i], server_addr, sockfd, log);
+        }
+        start_time = std::chrono::steady_clock::now(); // Reset timer
+      }
+    }
+  }
+
   // End connection
   end_connection(server_addr, sockfd, start_seq_num, log);
 
