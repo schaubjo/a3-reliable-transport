@@ -67,19 +67,11 @@ int main(int argc, char *argv[]) {
         // Only accept START if no connection in progress or duplicate START
         if (connection_seq_num == -1 ||
             connection_seq_num == packet.header.seqNum) {
-          // std::cout << "RECEIVER START 2" << std::endl;
 
           // Send acknowledgement
-          PacketHeader ack_header;
-          ack_header.type = htonl(ACK);
-          ack_header.length = htonl(0);
-          ack_header.seqNum = htonl(packet.header.seqNum);
-          ack_header.checksum = htonl(0);
-          Packet ack_packet;
-          ack_packet.header = ack_header;
-          send_packet(ack_packet, server_addr, sockfd, log);
+          send_ack(server_addr, sockfd, log, packet.header.seqNum);
 
-          connection_seq_num = packet.header.seqNum;
+          connection_seq_num = packet.header.seqNum; // TODO: FIX
         }
 
       } else if (packet.header.type == DATA && connection_seq_num != -1 &&
@@ -93,21 +85,10 @@ int main(int argc, char *argv[]) {
         window_end = window_start + WINDOW_SIZE;
 
         // Send acknowledgement for data
-        PacketHeader ack_header;
-        ack_header.type = htonl(ACK);
-        ack_header.length = htonl(0);
-        ack_header.seqNum = htonl(window_start);
-        ack_header.checksum = htonl(0);
-        Packet ack_packet;
-        ack_packet.header = ack_header;
-        send_packet(ack_packet, server_addr, sockfd, log);
-
+        send_ack(server_addr, sockfd, log, window_start);
       } else if (packet.header.type == END) {
         // If the current connection is closing
-        // std::cout << packet.header.seqNum << std::endl;
-        // std::cout << connection_seq_num << std::endl;
         if (connection_seq_num == packet.header.seqNum) {
-          // std::cout << "ERASING" << std::endl;
           // Erase data for this connection
           window_start = 0;
           window_end = window_start + WINDOW_SIZE;
@@ -116,14 +97,7 @@ int main(int argc, char *argv[]) {
         }
         std::cout << "RECEIVER END" << std::endl;
         // Send acknowledgement
-        PacketHeader ack_header;
-        ack_header.type = htonl(ACK);
-        ack_header.length = htonl(0);
-        ack_header.seqNum = htonl(packet.header.seqNum);
-        ack_header.checksum = htonl(0);
-        Packet ack_packet;
-        ack_packet.header = ack_header;
-        send_packet(ack_packet, server_addr, sockfd, log);
+        send_ack(server_addr, sockfd, log, packet.header.seqNum);
       }
     } else {
       // Avoid busy waiting

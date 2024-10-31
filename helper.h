@@ -38,4 +38,5 @@ int generate_start_seq_num();
 
 std::ofstream truncate_log_and_set_append(std::string log_filename);
 
+void send_ack(sockaddr_in &addr, int sockfd, std::ofstream &log, int seq_num);
 #endif

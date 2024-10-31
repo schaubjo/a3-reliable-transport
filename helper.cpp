@@ -237,3 +237,17 @@ ofstream truncate_log_and_set_append(string log_filename) {
 
   return log;
 }
+
+void send_ack(sockaddr_in &addr, int sockfd, ofstream &log, int seq_num) {
+  // Initialize packet
+  PacketHeader ack_header;
+  ack_header.type = htonl(ACK);
+  ack_header.length = htonl(0);
+  ack_header.seqNum = htonl(seq_num);
+  ack_header.checksum = htonl(0);
+  Packet ack_packet;
+  ack_packet.header = ack_header;
+
+  // Send acknowledgement
+  send_packet(ack_packet, addr, sockfd, log);
+}
