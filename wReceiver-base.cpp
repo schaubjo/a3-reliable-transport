@@ -77,7 +77,8 @@ int main(int argc, char *argv[]) {
         }
 
       } else if (packet.header.type == DATA && connection_seq_num != -1 &&
-                 static_cast<int>(packet.header.seqNum) < window_end && valid_checksum(packet)) {
+                 static_cast<int>(packet.header.seqNum) < window_end &&
+                 valid_checksum(packet)) {
         // Mark packet as received
         packets_received[packet.header.seqNum] = packet;
 
@@ -94,9 +95,6 @@ int main(int argc, char *argv[]) {
         if (connection_seq_num == static_cast<int>(packet.header.seqNum)) {
           std::string output_path = std::filesystem::current_path() /
                                     output_dir.substr(1) / output_file;
-          std::cout << "current_path " << std::filesystem::current_path()
-                    << std::endl;
-          std::cout << "output_dir " << output_path << std::endl;
           write_data(output_path, packets_received);
 
           // Erase data for this connection

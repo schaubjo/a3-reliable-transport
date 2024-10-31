@@ -32,7 +32,6 @@ int main(int argc, char *argv[]) {
 
   // Transform input file into vector of packets
   std::vector<Packet> packets = packet_data_init(input_filename);
-  std::cout << packets.size() << std::endl;
   // Socket setup
   int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sockfd < 0) {
