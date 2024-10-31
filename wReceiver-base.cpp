@@ -52,6 +52,14 @@ int main(int argc, char *argv[]) {
   // Open the file in truncate mode to clear its contents
   std::ofstream log = truncate_log_and_set_append(log_filename);
 
+  std::filesystem::path output_dir_path =
+      std::filesystem::current_path() / output_dir.substr(1);
+  if (std::filesystem::create_directory(output_dir_path)) {
+    std::cout << "Created output_dir" << std::endl;
+  } else {
+    std::cout << "output_dir already exists." << std::endl;
+  }
+
   std::cout << "Listening..." << std::endl;
   std::unordered_map<int, Packet> packets_received;
 
@@ -93,9 +101,8 @@ int main(int argc, char *argv[]) {
         std::string output_file =
             "FILE-" + std::to_string(connection_count) + ".out";
         if (connection_seq_num == static_cast<int>(packet.header.seqNum)) {
-          std::string output_path = std::filesystem::current_path() /
-                                    output_dir.substr(1) / output_file;
-          write_data(output_path, packets_received);
+          std::string output_file_path = output_dir_path / output_file;
+          write_data(output_file_path, packets_received);
 
           // Erase data for this connection
           window_start = 0;
