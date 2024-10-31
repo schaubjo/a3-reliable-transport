@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <chrono>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <set>
@@ -11,7 +12,8 @@
 #include <unistd.h>
 #include <unordered_map>
 
-int calc_continuous_packets_received(std::set<int> packets_received) {
+int calc_continuous_packets_received(
+    std::unordered_map<int, Packet> packets_received) {
   int i = 0;
   while (true) {
     if (packets_received.find(i) == packets_received.end()) {
@@ -52,33 +54,33 @@ int main(int argc, char *argv[]) {
 
   std::cout << "Listening..." << std::endl;
   // TODO: Add window stuff
-  std::set<int> packets_received;
-  std::set<int> started_connections;
+  std::unordered_map<int, Packet> packets_received;
+
+  // Holds the START/END seqNum of the current connection
   int connection_seq_num = -1;
+  int connection_count = 0;
   int window_start = 0;
   int window_end = window_start + WINDOW_SIZE;
   while (true) {
-    // Receive any packet
+    // Try to receive packet
     Packet packet;
     if (receive_packet(packet, server_addr, sockfd, log)) {
       if (packet.header.type == START) {
         std::cout << "RECEIVER START" << std::endl;
 
-        // Only accept START if no connection in progress or duplicate START
+        // Only accept START if no connection in progress or sender retries
         if (connection_seq_num == -1 ||
             connection_seq_num == packet.header.seqNum) {
-
           // Send acknowledgement
           send_ack(server_addr, sockfd, log, packet.header.seqNum);
 
-          connection_seq_num = packet.header.seqNum; // TODO: FIX
+          connection_seq_num = packet.header.seqNum;
         }
 
       } else if (packet.header.type == DATA && connection_seq_num != -1 &&
                  window_start <= packet.header.seqNum &&
                  packet.header.seqNum < window_end) {
-        // TODO: add data somewhere
-        packets_received.insert(packet.header.seqNum);
+        packets_received[packet.header.seqNum] = packet;
 
         // Adjust window as necessary
         window_start = calc_continuous_packets_received(packets_received);
@@ -89,11 +91,16 @@ int main(int argc, char *argv[]) {
       } else if (packet.header.type == END) {
         // If the current connection is closing
         if (connection_seq_num == packet.header.seqNum) {
+          std::string output_file =
+              "FILE-" + std::to_string(connection_count) + ".out";
+          write_data(output_dir, output_file, packets_received);
+
           // Erase data for this connection
           window_start = 0;
           window_end = window_start + WINDOW_SIZE;
           packets_received.clear();
           connection_seq_num = -1;
+          connection_count++;
         }
         std::cout << "RECEIVER END" << std::endl;
         // Send acknowledgement

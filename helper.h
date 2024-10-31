@@ -4,6 +4,7 @@
 #include "PacketHeader.h"
 #include <netinet/in.h>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 constexpr int MAX_PACKET_SIZE = 1472;
@@ -39,4 +40,7 @@ int generate_start_seq_num();
 std::ofstream truncate_log_and_set_append(std::string log_filename);
 
 void send_ack(sockaddr_in &addr, int sockfd, std::ofstream &log, int seq_num);
+
+void write_data(std::string output_dir, std::string filename,
+                std::unordered_map<int, Packet> packets_received);
 #endif
