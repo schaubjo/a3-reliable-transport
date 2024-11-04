@@ -2,6 +2,7 @@
 #include "PacketHeader.h"
 #include "crc32.h"
 #include <arpa/inet.h>
+#include <chrono>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -12,7 +13,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
-#include <chrono>
 
 using namespace std;
 
@@ -127,9 +127,9 @@ void send_packet(Packet &packet, sockaddr_in &addr, int sockfd, ofstream &log) {
   }
 
   // Log info
-  log << "S " << ntohl(packet.header.type) << " " << ntohl(packet.header.seqNum)
-      << " " << ntohl(packet.header.length) << " "
-      << ntohl(packet.header.checksum) << endl;
+  log << ntohl(packet.header.type) << " " << ntohl(packet.header.seqNum) << " "
+      << ntohl(packet.header.length) << " " << ntohl(packet.header.checksum)
+      << endl;
 }
 
 bool receive_packet(Packet &packet, sockaddr_in &addr, int sockfd,
@@ -161,7 +161,7 @@ bool receive_packet(Packet &packet, sockaddr_in &addr, int sockfd,
   }
 
   // Log info
-  log << "R " << packet.header.type << " " << packet.header.seqNum << " "
+  log << packet.header.type << " " << packet.header.seqNum << " "
       << packet.header.length << " " << packet.header.checksum << endl;
   return true;
 }
@@ -253,6 +253,10 @@ void write_data(std::string output_path,
     outFile.write(packets_received[i].data, packets_received[i].header.length);
     i++;
   }
+
+  // Flush to make it appear faster?
+  outFile.flush();
+  outFile.close();
 }
 
 bool valid_checksum(Packet &packet) {
