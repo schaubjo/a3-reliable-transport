@@ -87,6 +87,7 @@ int main(int argc, char *argv[]) {
       } else if (packet.header.type == DATA && connection_seq_num != -1 &&
                  static_cast<int>(packet.header.seqNum) < window_end &&
                  valid_checksum(packet)) {
+        // TODO: should it receive packets under lower bound of window?
         // Mark packet as received
         packets_received[packet.header.seqNum] = packet;
 
@@ -96,6 +97,7 @@ int main(int argc, char *argv[]) {
 
         // Send acknowledgement for data
         send_ack(server_addr, sockfd, log, packet.header.seqNum);
+
       } else if (packet.header.type == END) {
         // If the current connection is closing
         std::string output_file =

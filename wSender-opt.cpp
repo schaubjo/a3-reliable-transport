@@ -117,7 +117,6 @@ int main(int argc, char *argv[]) {
           packet_timestamps[i] = {false, start_time};
         }
       } else if (acked_seq_num > window_start) {
-        // TODO: need to check that acked_seq_num is less than window_end?
         // Can't slide window but can mark packet as received in map
         packet_timestamps[acked_seq_num].first = true;
       }
