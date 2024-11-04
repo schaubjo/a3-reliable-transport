@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
         window_end = window_start + WINDOW_SIZE;
 
         // Send acknowledgement for data
-        send_ack(server_addr, sockfd, log, window_start);
+        send_ack(server_addr, sockfd, log, packet.header.seqNum);
       } else if (packet.header.type == END) {
         // If the current connection is closing
         std::string output_file =
