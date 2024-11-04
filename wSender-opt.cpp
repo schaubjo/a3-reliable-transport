@@ -12,6 +12,25 @@
 #include <unistd.h>
 #include <vector>
 
+int calc_new_window_start(
+    std::unordered_map<int,
+                       std::pair<bool, std::chrono::steady_clock::time_point>>
+        packet_timestamps,
+    int old_window_start) {
+
+  int i = old_window_start;
+  while (true) {
+    // Find first index after old_window_start with no received packet
+    if (packet_timestamps.find(i) == packet_timestamps.end() ||
+        !packet_timestamps[i].first) {
+      return i;
+    }
+    i++;
+  }
+  std::cout << "Error in calc_new_window_start" << std::endl;
+  return -1;
+}
+
 int main(int argc, char *argv[]) {
   // Parse command line arguments
   if (argc != 6) {
@@ -54,56 +73,70 @@ int main(int argc, char *argv[]) {
   // Initiate connection
   start_connection(server_addr, sockfd, start_seq_num, log);
 
+  // Declare map to record timestamps for each packet sent
+  std::unordered_map<int,
+                     std::pair<bool, std::chrono::steady_clock::time_point>>
+      packet_timestamps;
+  auto start_time = std::chrono::steady_clock::now();
+
   // Send all packets in window
   int window_start = 0;
   int window_end = std::min(WINDOW_SIZE, static_cast<int>(packets.size()));
   for (int i = window_start; i < window_end; i++) {
     send_packet(packets[i], server_addr, sockfd, log);
+    packet_timestamps[i] = {false, start_time};
   }
-  // Wait for acks
-  auto start_time = std::chrono::steady_clock::now();
 
-  while (window_start < static_cast<int>(packets.size())) {
+  // Wait for acks
+  while (true) {
     Packet packet;
     if (receive_packet(packet, server_addr, sockfd, log) &&
         packet.header.type == ACK) {
       // If an ACK was received
       int acked_seq_num = packet.header.seqNum;
-      if (window_start < acked_seq_num) {
-        // Receiver is expecting more data; slide window and send new packets
-        if (acked_seq_num == static_cast<int>(packets.size())) {
+      if (acked_seq_num == window_start) {
+        // Can slide window
+        packet_timestamps[acked_seq_num].first = true;
+
+        // Get start of new window
+        window_start = calc_new_window_start(packet_timestamps, window_start);
+        if (window_start == static_cast<int>(packets.size())) {
           std::cout << "ALL PACKETS SENT" << std::endl;
-          // Finish if all packets sent
           break;
         }
+
+        // Get end of new window
         int prev_end = window_end;
-        window_start = acked_seq_num;
         window_end = std::min(window_start + WINDOW_SIZE,
                               static_cast<int>(packets.size()));
+
+        start_time = std::chrono::steady_clock::now();
         for (int i = prev_end; i < window_end; i++) {
           // Send packets that were just added to this window
           send_packet(packets[i], server_addr, sockfd, log);
+          packet_timestamps[i] = {false, start_time};
         }
-
-        // Reset timer
-        start_time = std::chrono::steady_clock::now();
+      } else if (acked_seq_num > window_start) {
+        // TODO: need to check that acked_seq_num is less than window_end?
+        // Can't slide window but can mark packet as received in map
+        packet_timestamps[acked_seq_num].first = true;
       }
     }
 
-    // Check for timeout
-    auto elapsed_time = std::chrono::steady_clock::now() - start_time;
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time)
-            .count() > RETRANSMISSION_TIMER) {
-      // Resend packets in window
-      for (int i = window_start; i < window_end; i++) {
+    // Check if any packets have timed out
+    for (int i = window_start; i < window_end; i++) {
+      bool received = packet_timestamps[i].first;
+      auto time_at_send = packet_timestamps[i].second;
+      auto elapsed_time = std::chrono::steady_clock::now() - time_at_send;
+      if (!received &&
+          std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time)
+                  .count() > RETRANSMISSION_TIMER) {
+        // Resend packet if packet has not yet been acked and 500 ms have passed
         send_packet(packets[i], server_addr, sockfd, log);
-      }
 
-      // Reset timer
-      start_time = std::chrono::steady_clock::now();
-    } else {
-      // Avoid busy waiting
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        // Reset timer for packet
+        packet_timestamps[i].second = std::chrono::steady_clock::now();
+      }
     }
   }
 
