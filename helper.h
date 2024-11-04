@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <filesystem>
 
 constexpr int MAX_PACKET_SIZE = 1472;
 constexpr int PACKET_HEADER_SIZE = 16;
@@ -41,7 +42,7 @@ std::ofstream truncate_log_and_set_append(std::string log_filename);
 
 void send_ack(sockaddr_in &addr, int sockfd, std::ofstream &log, int seq_num);
 
-void write_data(std::string output_path,
+void write_data(std::filesystem::path output_path,
                 std::unordered_map<int, Packet> packets_received);
 
 bool valid_checksum(Packet &packet);

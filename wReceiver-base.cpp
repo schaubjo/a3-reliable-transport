@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
   }
   const int port_num = std::stoi(argv[1]);
   const int WINDOW_SIZE = std::stoi(argv[2]);
-  const std::string output_dir = argv[3];
+  std::filesystem::path output_dir = argv[3];
   const std::string log_filename = argv[4];
 
   int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -52,13 +52,13 @@ int main(int argc, char *argv[]) {
   // Open the file in truncate mode to clear its contents
   std::ofstream log = truncate_log_and_set_append(log_filename);
 
-  std::filesystem::path output_dir_path =
-      std::filesystem::current_path() / output_dir.substr(1);
-  if (std::filesystem::create_directory(output_dir_path)) {
-    std::cout << "Created output_dir" << std::endl;
-  } else {
-    std::cout << "output_dir already exists." << std::endl;
-  }
+  // std::filesystem::path output_dir_path =
+  //     std::filesystem::current_path() / output_dir.substr(1);
+  // if (std::filesystem::create_directory(output_dir_path)) {
+  //   std::cout << "Created output_dir" << std::endl;
+  // } else {
+  //   std::cout << "output_dir already exists." << std::endl;
+  // }
 
   std::cout << "Listening..." << std::endl;
   std::unordered_map<int, Packet> packets_received;
@@ -98,10 +98,10 @@ int main(int argc, char *argv[]) {
         send_ack(server_addr, sockfd, log, window_start);
       } else if (packet.header.type == END) {
         // If the current connection is closing
-        std::string output_file =
+        std::filesystem::path output_file =
             "FILE-" + std::to_string(connection_count) + ".out";
         if (connection_seq_num == static_cast<int>(packet.header.seqNum)) {
-          std::string output_file_path = output_dir_path / output_file;
+          std::filesystem::path output_file_path = output_dir / output_file;
           write_data(output_file_path, packets_received);
 
           // Erase data for this connection

@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
+#include <filesystem>
 
 using namespace std;
 
@@ -240,9 +241,10 @@ void send_ack(sockaddr_in &addr, int sockfd, ofstream &log, int seq_num) {
   send_packet(ack_packet, addr, sockfd, log);
 }
 
-void write_data(std::string output_path,
+void write_data(std::filesystem::path output_path,
                 std::unordered_map<int, Packet> packets_received) {
-
+  
+  std::cout << output_path << std::endl;
   ofstream outFile(output_path, std::ios::binary | std::ios::trunc);
   if (!outFile) {
     std::cerr << "Error opening file for writing: " << output_path << std::endl;
